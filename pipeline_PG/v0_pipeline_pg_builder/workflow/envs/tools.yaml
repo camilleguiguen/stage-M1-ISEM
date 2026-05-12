@@ -1,0 +1,9 @@
+name: panquest-tools
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - samtools
+  - htslib       # bgzip
+  - seqkit
+  - python >=3.10

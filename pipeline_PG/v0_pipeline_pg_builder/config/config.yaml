@@ -1,0 +1,65 @@
+# =============================================================================
+# Fichier de configuration du pipeline construction de graphes de pangénomes (à éditer)
+# =============================================================================
+
+# --- Entrées ------------------------------------------------------------------
+# Soit un fichier FASTA multi-séquences (1 isolat = 1 record),
+# soit un répertoire contenant un FASTA par isolat (.fa / .fasta / .fna,
+# éventuellement gzippés). Le pipeline détecte automatiquement.
+input: "data/monfichier.fasta"          # fichier OU répertoire
+
+# Référence : par défaut le premier isolat (ordre alphabétique des fichiers,
+# ou ordre d'apparition dans le multi-FASTA). Sinon préciser le nom de l'isolat
+# (= nom de séquence pour un multi-FASTA).
+reference: null                 # ex: "Pd_GCA_001641265"
+
+# Nom du run (utilisé pour le dossier de sortie)
+run_name: "p_destructans_v1"
+
+# --- Sortie -------------------------------------------------------------------
+output_dir: "results"
+
+# --- Outils à exécuter --------------------------------------------------------
+# Active ou désactive chaque constructeur indépendamment.
+tools:
+  minigraph:         true
+  minigraph_cactus:  false
+  pggb:              false
+
+# --- Paramètres par outil -----------------------------------------------------
+# Tous les paramètres sont optionnels : si absents, on utilise les valeurs par
+# défaut indiquées en commentaire.
+
+minigraph:
+  # cf. https://github.com/lh3/minigraph
+  preset: "ggs"                 # défaut: ggs (graph generation, SVs)
+  min_sv_len: 50                # -L, taille min des SV (défaut 50)
+  threads: 8
+  extra: ""                     # chaîne libre ajoutée à la fin de la commande
+
+minigraph_cactus:
+  # cf. https://github.com/ComparativeGenomicsToolkit/cactus
+  # le nom de référence dans le seqfile sera celui désigné par `reference`
+  threads: 16
+  max_memory: "64G"
+  extra: ""
+
+pggb:
+  # cf. https://github.com/pangenome/pggb
+  # n = nombre d'haplotypes (auto-rempli = nombre d'isolats si non précisé)
+  n_haplotypes: null
+  segment_length: 5000          # -s (défaut 5000)
+  percent_identity: 90          # -p (défaut 90)
+  threads: 16
+  extra: ""
+
+# --- Ressources SLURM (par défaut, surchargeable par règle) -------------------
+resources:
+  default:
+    mem_mb: 8000
+    runtime: 120                # minutes
+    cpus: 4
+  heavy:                        # pour cactus / pggb
+    mem_mb: 64000
+    runtime: 720
+    cpus: 16

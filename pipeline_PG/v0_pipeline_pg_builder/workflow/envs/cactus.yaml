@@ -1,0 +1,11 @@
+# Minigraph-Cactus n'est pas toujours empaqueté correctement en conda.
+# Recommandation officielle : utiliser l'image Docker/Singularity.
+# Cet env installe le binding python `cactus` ; sur GenOuest on peut aussi
+# remplacer cette règle par un appel `singularity exec cactus.sif ...`.
+name: panquest-cactus
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - cactus
+  - gfatools

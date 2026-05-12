@@ -1,0 +1,8 @@
+name: panquest-pggb
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - pggb
+  - samtools
+  - htslib  # pour bgzip

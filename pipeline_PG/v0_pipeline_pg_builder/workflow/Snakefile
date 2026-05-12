@@ -1,0 +1,41 @@
+# =============================================================================
+# PanQueSt - Pipeline de construction de graphes de pangénome
+# =============================================================================
+#
+# Entrée  : un FASTA multi-séquences OU un répertoire de FASTA
+# Sortie  : <output_dir>/<run_name>/
+#             ├── <tool>/pangenome.gfa
+#             ├── <tool>/log.txt
+#             └── run_summary.txt
+# =============================================================================
+
+from pathlib import Path
+
+configfile: "config/config.yaml"
+
+# --- Fichiers deffinissant les rules ---------------------------------------------------------------
+include: "rules/common.smk"
+include: "rules/prepare.smk"
+include: "rules/minigraph.smk"
+include: "rules/minigraph_cactus.smk"
+include: "rules/pggb.smk"
+include: "rules/report.smk"
+
+# --- Cibles -------------------------------------------------------------------
+RUN_DIR = Path(config["output_dir"]) / config["run_name"]
+
+def all_targets():
+    """Liste des GFA attendus en fonction des outils activés."""
+    targets = []
+    if config["tools"].get("minigraph", False):
+        targets.append(str(RUN_DIR / "minigraph" / "pangenome.gfa"))
+    if config["tools"].get("minigraph_cactus", False):
+        targets.append(str(RUN_DIR / "minigraph_cactus" / "pangenome.gfa"))
+    if config["tools"].get("pggb", False):
+        targets.append(str(RUN_DIR / "pggb" / "pangenome.gfa"))
+    return targets
+
+rule all:
+    input:
+        all_targets(),
+        str(RUN_DIR / "run_summary.txt"),

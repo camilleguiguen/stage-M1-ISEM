@@ -1,0 +1,44 @@
+# Profil SLURM pour Snakemake (v8+, executor plugin slurm)
+#
+# Usage :
+#   snakemake --profile profiles/slurm
+#
+# Prérequis :
+#   pip install snakemake-executor-plugin-slurm
+#
+# Adapter `account` / `partition` aux conventions GenOuest (à confirmer avec
+# l'équipe — voir https://www.genouest.org/howto/cluster/).
+
+executor: slurm
+jobs: 50                       # nb max de jobs simultanés
+use-conda: true
+conda-frontend: mamba          # plus rapide que conda
+keep-going: true               # continue les autres jobs si un échoue
+rerun-incomplete: true
+printshellcmds: true
+latency-wait: 60
+
+# Ressources par défaut, surchargeables par règle via `resources:`
+default-resources:
+  - slurm_partition=fast       # à ajuster
+  - mem_mb=8000
+  - runtime=120                # minutes
+  - cpus_per_task=4
+
+# Surcharges par règle (les noms doivent matcher les `rule` du Snakefile)
+set-resources:
+  run_minigraph:
+    slurm_partition: fast
+    cpus_per_task: 8
+    mem_mb: 16000
+    runtime: 240
+  run_minigraph_cactus:
+    slurm_partition: bigmem
+    cpus_per_task: 16
+    mem_mb: 64000
+    runtime: 720
+  run_pggb:
+    slurm_partition: bigmem
+    cpus_per_task: 16
+    mem_mb: 64000
+    runtime: 720
