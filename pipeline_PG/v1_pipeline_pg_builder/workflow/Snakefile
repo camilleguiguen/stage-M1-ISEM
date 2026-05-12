@@ -1,10 +1,10 @@
 # =============================================================================
-# PanQueSt - Pipeline simplifié : multi-FASTA -> graphe Minigraph
+# PanQueSt - Pipeline v1 : multi-FASTA -> graphe Minigraph
 # =============================================================================
 #
 # ENTRÉE  : un fichier multi-FASTA (1 record = 1 isolat)
 # SORTIE  : <output_dir>/<run_name>/
-#             ├── per_sample/<isolat>.fa     (1 FASTA par isolat)
+#             ├── per_sample/<isolat>.fa     (dossier avec 1 FASTA par isolat)
 #             ├── pangenome.gfa              (le graphe Minigraph)
 #             ├── minigraph.log              (log d'exécution)
 #             └── run_summary.txt            (résumé global)
@@ -16,60 +16,34 @@ from pathlib import Path
 configfile: "config/config.yaml"
 
 # --- 2. Lecture du multi-FASTA pour récupérer la liste des isolats ----------
-# 3 étapes :
-#   a) lire tous les noms de records dans le multi-FASTA
-#   b) appliquer le suffixe à virer (cosmétique, ex: "_chr1" -> rien)
-#   c) restreindre aux N premiers si n_first est défini
+# On lit juste les lignes commençant par ">" pour obtenir les noms.
 
 def read_record_names(fasta_path):
-    """Renvoie la liste ordonnée des noms de records (1er mot du header)."""
     names = []
     with open(fasta_path) as fh:
         for line in fh:
             if line.startswith(">"):
-                names.append(line[1:].split()[0])
+                names.append(line[1:].split()[0]) #On enlève le > (le [1:]), on coupe sur les espaces (split()), et on prend le premier mot ([0])
     return names
 
-# (a) noms bruts dans le FASTA
-RAW_NAMES = read_record_names(config["input"])
+ALL_NAMES = read_record_names(config["input"])
 
-# (b) noms "propres" pour usage interne (fichiers, dossiers, références)
-_suffix = config.get("strip_suffix")
-if _suffix:
-    CLEAN_NAMES = [n[:-len(_suffix)] if n.endswith(_suffix) else n
-                   for n in RAW_NAMES]
-else:
-    CLEAN_NAMES = list(RAW_NAMES)
+# Sous-ensemble pour les tests : N premiers isolats (null/absent = tous)
+n = config.get("n_first")
+SAMPLES = ALL_NAMES[:n] if n else ALL_NAMES #prend le sous jeu de données
 
-# Table de correspondance nom_propre -> nom_brut (pour samtools faidx)
-NAME_MAP = dict(zip(CLEAN_NAMES, RAW_NAMES))
+# Référence = 1er isolat de la sélection
+REFERENCE = SAMPLES[0]
 
-# (c) sélection sous-ensemble
-_n = config.get("n_first")
-if _n:
-    SAMPLES = CLEAN_NAMES[:_n]
-else:
-    SAMPLES = CLEAN_NAMES
+# Dossier de sortie du run
+RUN_DIR = Path(config["output_dir"]) / config["run_name"] 
 
-# Référence : config > premier de la liste
-_ref_cfg = config.get("reference")
-if _ref_cfg:
-    if _ref_cfg not in SAMPLES:
-        raise ValueError(
-            f"Référence '{_ref_cfg}' introuvable parmi : {SAMPLES}"
-        )
-    REFERENCE = _ref_cfg
-else:
-    REFERENCE = SAMPLES[0]
-
-RUN_DIR = Path(config["output_dir"]) / config["run_name"]
-
-# Petit affichage au démarrage (visible dans la console)
+# Petit affichage au debut dans la console)
 onstart:
     print("=" * 60)
     print(f"  Run    : {config['run_name']}")
     print(f"  Input  : {config['input']}")
-    print(f"  Total isolats dans le FASTA : {len(RAW_NAMES)}")
+    print(f"  Total dans le FASTA : {len(ALL_NAMES)}")
     print(f"  Sélectionnés ({len(SAMPLES)}) : {SAMPLES}")
     print(f"  Référence : {REFERENCE}")
     print("=" * 60)
@@ -77,7 +51,6 @@ onstart:
 
 # --- 3. Cible finale --------------------------------------------------------
 # "rule all" liste ce qu'on veut obtenir à la fin.
-# Snakemake remonte ensuite les dépendances tout seul.
 
 rule all:
     input:
@@ -86,8 +59,6 @@ rule all:
 
 
 # --- 4. Étape 1 : extraire chaque isolat dans son propre FASTA --------------
-# samtools faidx extrait un record par son nom (= header brut du multi-FASTA).
-# Le fichier de sortie est nommé avec le nom "propre" (suffixe viré).
 # Cette règle tourne UNE FOIS PAR ISOLAT grâce à la wildcard {sample}.
 
 rule extract_isolate:
@@ -95,24 +66,17 @@ rule extract_isolate:
         multifasta = config["input"],
     output:
         fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
-    params:
-        # nom brut à chercher dans le multi-FASTA (peut différer du sample
-        # à cause de strip_suffix)
-        raw_name = lambda wc: NAME_MAP[wc.sample],
     shell:
         """
-        samtools faidx {input.multifasta} {params.raw_name} > {output.fa}
+        samtools faidx {input.multifasta} {wildcards.sample} > {output.fa}
         """
 
 
 # --- 5. Étape 2 : lancer Minigraph ------------------------------------------
-# Minigraph est incrémental : on lui passe la référence en premier, puis le
-# reste. On construit la liste de fichiers à la volée.
+# Minigraph est incrémental : référence en premier, puis le reste.
 
 rule run_minigraph:
     input:
-        # On demande tous les FASTA par isolat. expand() génère la liste :
-        # ["results/test1/per_sample/A.fa", "results/test1/per_sample/B.fa", ...]
         fastas = expand(
             str(RUN_DIR / "per_sample" / "{sample}.fa"),
             sample=SAMPLES,
@@ -123,7 +87,6 @@ rule run_minigraph:
     params:
         min_sv_len = config["minigraph"]["min_sv_len"],
         ref_fa     = str(RUN_DIR / "per_sample" / f"{REFERENCE}.fa"),
-        # autres FASTA = tous sauf la référence
         other_fas  = [
             str(RUN_DIR / "per_sample" / f"{s}.fa")
             for s in SAMPLES if s != REFERENCE

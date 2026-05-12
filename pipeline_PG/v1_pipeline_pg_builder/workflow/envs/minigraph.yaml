@@ -1,4 +1,4 @@
-name: panquest-simple
+name: pipeline-v1
 channels:
   - bioconda
   - conda-forge

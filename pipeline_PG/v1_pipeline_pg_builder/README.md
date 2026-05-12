@@ -7,9 +7,9 @@ un **graphe Minigraph** + un résumé.
 
 ```
 panquest_simple/
-├── config/config.yaml         ← paramètres utilisateur
+├── config/config.yaml         ← fichier de config à éditer par user
 └── workflow/
-    ├── Snakefile              ← définit les 3 règles
+    ├── Snakefile              ← définit les 3 rules
     ├── envs/minigraph.yaml    ← env conda (minigraph + samtools)
     └── scripts/gfa_stats.py   ← stats + résumé
 ```
@@ -19,9 +19,9 @@ panquest_simple/
 ```
 multi-FASTA d'entrée
         │
-        │  rule extract_isolate  (1× par isolat, en parallèle)
+        │  rule extract_isolate  (1 fois par isolat)
         ▼
-per_sample/<isolat>.fa
+per_sample/<isolat>.fasta
         │
         │  rule run_minigraph
         ▼
@@ -32,16 +32,16 @@ pangenome.gfa  +  minigraph.log
 run_summary.txt
 ```
 
-Snakemake déduit cet ordre **tout seul** à partir des input/output des règles.
+Snakemake déduit cet ordre **seul** à partir des input/output des règles.
 
 ## Configuration
 
 Édite `config/config.yaml` :
 
 ```yaml
-input: "data/isolates.fa"   # ton multi-FASTA
+input: "data/mes_data_assemblees.fasta"   # le multi-FASTA déjà assmblé
 run_name: "test1"
-output_dir: "results"
+output_dir: "results_PG"
 
 minigraph:
   min_sv_len: 50
@@ -51,10 +51,10 @@ minigraph:
 ## Lancement
 
 ```bash
-# Installer conda + snakemake une fois pour toutes (cf. doc Snakemake)
+# Installer conda + snakemake une fois (cf. doc Snakemake)
 mamba install -n base -c bioconda snakemake
 
-# Dry-run : montre ce qui va se passer SANS rien lancer
+# DRY-RUN : montre ce qui va se passer SANS rien lancer
 cd panquest_simple
 snakemake -n -p --snakefile workflow/Snakefile
 
