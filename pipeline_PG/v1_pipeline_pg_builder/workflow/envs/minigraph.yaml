@@ -3,6 +3,6 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - minigraph >=0.21
+  - minigraph >=0.21 
   - samtools
   - python >=3.10

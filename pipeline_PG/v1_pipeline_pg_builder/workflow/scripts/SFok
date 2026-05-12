@@ -80,7 +80,7 @@ rule extract_isolate:
 #_________________________________________________________________________________#
 
 # --- 5. Étape 2 : lancer Minigraph 
-# dans Minigraph : référence en premier, puis le reste.
+# Minigraph est incrémental : référence en premier, puis le reste.
 
 rule run_minigraph:
     input:
@@ -94,13 +94,38 @@ rule run_minigraph:
     params:
         min_sv_len = config["minigraph"]["min_sv_len"],
         ref_fa     = str(RUN_DIR / "per_sample" / f"{REFERENCE}.fa"),
-        other_fas  = 
+        other_fas  = [
+            str(RUN_DIR / "per_sample" / f"{s}.fa")
+            for s in SAMPLES if s != REFERENCE
+        ],
     threads:
+        config["minigraph"]["threads"]
     shell:
+        r"""
+        START=$(date +%s)
+        {{
+          echo "===== Minigraph =====";
+          echo "Date     : $(date)";
+          echo "Version  : $(minigraph --version)";
+          echo "Référence: {params.ref_fa}";
+          echo "Autres   : {params.other_fas}";
+          echo "Threads  : {threads}";
+          echo "min SV   : {params.min_sv_len}";
+          echo "---------------------";
+        }} > {output.log}
+
+        minigraph -cxggs -L {params.min_sv_len} -t {threads} \
+            {params.ref_fa} {params.other_fas} \
+            > {output.gfa} 2>> {output.log}
+
+        END=$(date +%s)
+        echo "---------------------" >> {output.log}
+        echo "Durée: $((END-START)) s" >> {output.log}
+        """
 
 #_________________________________________________________________________________#
 
-# --- 6. Étape 3 : construire un résumé du run avec qq stats-------------------------------
+# --- 6. Étape 3 : construire un résumé du run -------------------------------
 
 rule build_summary:
     input:
