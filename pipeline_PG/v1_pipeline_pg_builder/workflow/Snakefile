@@ -74,6 +74,8 @@ rule extract_isolate:
         multifasta = config["input"],
     output:
         fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
+    conda:
+        "envs/minigraph.yaml"
     shell:
         """
         samtools faidx {input.multifasta} {wildcards.sample} > {output.fa}
@@ -97,6 +99,8 @@ rule run_minigraph:
         min_sv_len = config["minigraph"]["min_sv_len"],
     threads:
         config["minigraph"]["threads"]
+    conda:
+        "envs/minigraph.yaml"
     shell:
         """
         minigraph -cxggs -L {params.min_sv_len} -t {threads} {input.fastas} > {output.gfa} 2> {output.log}
