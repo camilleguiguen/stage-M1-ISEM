@@ -6,11 +6,11 @@ un **graphe Minigraph** + un résumé.
 ## Structure
 
 ```
-panquest_simple/
-├── config/config.yaml         ← fichier de config à éditer par user
+pipeline_v1/
+├── config/config.yaml         ← fichier de config à édité par user
 └── workflow/
     ├── Snakefile              ← définit les 3 rules
-    ├── envs/minigraph.yaml    ← env conda (minigraph + samtools)
+    ├── envs/minigraph.yaml    ← env conda (minigraph + samtools + python)
     └── scripts/gfa_stats.py   ← stats + résumé
 ```
 
@@ -21,15 +21,15 @@ multi-FASTA d'entrée
         │
         │  rule extract_isolate  (1 fois par isolat)
         ▼
-per_sample/<isolat>.fasta
+per_sample/<isolat>.fa
         │
         │  rule run_minigraph
         ▼
-pangenome.gfa  +  minigraph.log
+Minigraph/pangenome_MC.gfa  +  Minigraph/minigraph.log
         │
         │  rule build_summary
         ▼
-run_summary.txt
+runs_summary_update.txt
 ```
 
 Snakemake déduit cet ordre **seul** à partir des input/output des règles.
@@ -39,9 +39,16 @@ Snakemake déduit cet ordre **seul** à partir des input/output des règles.
 Édite `config/config.yaml` :
 
 ```yaml
-input: "data/mes_data_assemblees.fasta"   # le multi-FASTA déjà assmblé
-run_name: "test1"
-output_dir: "results_PG"
+input: "data/mes_data_assemblees.fasta"   # le multi-FASTA déjà assemblé
+
+# nom du dossier à composé pour l'instant: result_<species>_chrom<chrom>_<other>
+species: "ecoli"
+chrom: "1"
+other: "test"
+
+output_dir: "all_results"
+
+n_first: 5   # null = tous les isolats
 
 minigraph:
   min_sv_len: 50
@@ -55,7 +62,7 @@ minigraph:
 mamba install -n base -c bioconda snakemake
 
 # DRY-RUN : montre ce qui va se passer SANS rien lancer
-cd panquest_simple
+cd pipeline_v1
 snakemake -n -p --snakefile workflow/Snakefile
 
 # Vrai run
@@ -65,14 +72,15 @@ snakemake --use-conda --cores 4 --snakefile workflow/Snakefile
 ## Sortie
 
 ```
-results/test1/
-├── per_sample/
-│   ├── isolatA.fa
-│   ├── isolatB.fa
-│   └── ...
-├── pangenome.gfa
-├── minigraph.log
-└── run_summary.txt
+all_results/
+└── result_ecoli_chrom1_test/
+    ├── per_sample/
+    │   └── *.fa
+    ├── Minigraph/
+    │   ├── pangenome_MC.gfa
+    │   └── minigraph.log
+    └── runs_summary_update.txt
+
 ```
 
 ## Une fois que ça marche…
