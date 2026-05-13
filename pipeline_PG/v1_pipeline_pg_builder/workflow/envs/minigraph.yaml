@@ -1,4 +1,4 @@
-name: pipeline-v1
+name: env-pipeline-v1
 channels:
   - bioconda
   - conda-forge
