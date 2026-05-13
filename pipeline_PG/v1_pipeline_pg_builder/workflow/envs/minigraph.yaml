@@ -6,3 +6,4 @@ dependencies:
   - minigraph >=0.21
   - samtools
   - python >=3.10
+  - snakemake >=7
