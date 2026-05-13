@@ -6,25 +6,24 @@
 # Fichier où chaque (>nom) = un isolat (assemblage complet)
 input: "data/mes_data_assemblees.fasta"
 
-# Nom du run : utilisé pour nommer le dossier de sortie
-run_name: "test_5isolats"
+# --- Identifiant du run (compose le nom du dossier de sortie) ---------------
+# Dossier créé : all_results/result_<species>_chrom<chrom>_<other>/
+species: "ecoli"
+chrom: "1"
+other: "test"
 
-# Répertoire de sortie
-output_dir: "results_PG"
+# Répertoire de sortie racine
+output_dir: "all_results"
 
 # --- Sélection des isolats --------------------------------------------------
 # Pour tester sur un sous-ensemble : N premiers isolats du fichier d'entrée.
 # Mettre `null` (ou supprimer la ligne) pour prendre tous les isolats.
 n_first: 5
 
-# Isolat de référence pour Minigraph (= 1er fichier passé à minigraph).
-# `null` -> par défaut le premier isolat du fichier.
-reference: null
-
 # Si les noms de records ont un suffixe commun à virer (ex: "_chr1"), le mettre
 # ici. Permet d'avoir des noms de fichiers plus propres dans la sortie.
 # null = garder les noms tels quels.
-strip_suffix: "_chr1"
+strip_suffix: null
 
 # --- Paramètres Minigraph ----------------------------------------------------
 minigraph:

@@ -55,7 +55,7 @@ stats = gfa_stats(gfa)
 
 lines = []
 lines.append("=" * 60)
-lines.append("  PanQueSt - Résumé d'exécution")
+lines.append("  Pipeline PG Builder - Résumé d'exécution")
 lines.append("=" * 60)
 lines.append(f"Date      : {datetime.now().isoformat(timespec='seconds')}")
 lines.append(f"Run       : {p.run_name}")

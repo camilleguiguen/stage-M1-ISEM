@@ -36,12 +36,14 @@ SAMPLES = ALL_NAMES[:n] if n else ALL_NAMES #prend le sous jeu de données
 REFERENCE = SAMPLES[0]
 
 # Dossier de sortie du run
-RUN_DIR = Path(config["output_dir"]) / config["run_name"] 
+#pour l'instant (species, chrom, other) mais a terme je decouperais le nom de l'input
+RUN_NAME = f"result_{config['species']}_chrom{config['chrom']}_{config['other']}"
+RUN_DIR  = Path(config["output_dir"]) / RUN_NAME
 
-# Petit affichage au debut dans la console)
+# Petit affichage au debut dans la console
 onstart:
     print("=" * 60)
-    print(f"  Run    : {config['run_name']}")
+    print(f"  Run    : {RUN_NAME}")
     print(f"  Input  : {config['input']}")
     print(f"  Total dans le FASTA : {len(ALL_NAMES)}")
     print(f"  Sélectionnés ({len(SAMPLES)}) : {SAMPLES}")
@@ -54,8 +56,8 @@ onstart:
 
 rule all:
     input:
-        str(RUN_DIR / "pangenome.gfa"),
-        str(RUN_DIR / "run_summary.txt"),
+        str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
+        str(RUN_DIR / "runs_summary_update.txt"),
 
 
 
@@ -89,14 +91,16 @@ rule run_minigraph:
             sample=SAMPLES,
         ),
     output:
-        gfa = str(RUN_DIR / "pangenome.gfa"),
-        log = str(RUN_DIR / "minigraph.log"),
+        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
+        log = str(RUN_DIR / "Minigraph" / "minigraph.log"),
     params:
         min_sv_len = config["minigraph"]["min_sv_len"],
-        ref_fa     = str(RUN_DIR / "per_sample" / f"{REFERENCE}.fa"),
-        other_fas  = 
     threads:
+        config["minigraph"]["threads"]
     shell:
+        """
+        minigraph -cxggs -L {params.min_sv_len} -t {threads} {input.fastas} > {output.gfa} 2> {output.log}
+        """
 
 #_________________________________________________________________________________#
 
@@ -104,12 +108,12 @@ rule run_minigraph:
 
 rule build_summary:
     input:
-        gfa = str(RUN_DIR / "pangenome.gfa"),
-        log = str(RUN_DIR / "minigraph.log"),
+        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
+        log = str(RUN_DIR / "Minigraph" / "minigraph.log"),
     output:
-        summary = str(RUN_DIR / "run_summary.txt"),
+        summary = str(RUN_DIR / "runs_summary_update.txt"),
     params:
-        run_name = config["run_name"],
+        run_name = RUN_NAME,
         samples  = SAMPLES,
         ref      = REFERENCE,
     script:
