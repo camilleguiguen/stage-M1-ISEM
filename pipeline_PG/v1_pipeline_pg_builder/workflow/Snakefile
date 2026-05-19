@@ -67,7 +67,7 @@ rule all:
 #_________________________________________________________________________________#
 
 # --- 4. Étape 1 : extraire chaque isolat dans son propre FASTA 
-# Cette règle tourne UNE FOIS PAR ISOLAT grâce à la wildcard {sample}.
+# Cette règle tourne UNE FOIS PAR ISOLAT (wildcard {sample}).
 
 rule extract_isolate:
     input:
