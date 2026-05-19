@@ -57,17 +57,44 @@ minigraph:
 
 ## Lancement
 
+Deux modes sont disponibles et peuvent coexister dans le même Snakefile.
+
+### Mode conda (développement local)
+
 ```bash
-# Installer conda + snakemake une fois (cf. doc Snakemake)
+# Installer snakemake une fois
 mamba install -n base -c bioconda snakemake
 
-# DRY-RUN : montre ce qui va se passer SANS rien lancer
-cd pipeline_v1
-snakemake -n -p --snakefile workflow/Snakefile
+# Dry-run
+snakemake --use-conda -n --snakefile workflow/Snakefile
 
 # Vrai run
 snakemake --use-conda --cores 4 --snakefile workflow/Snakefile
 ```
+
+### Mode Apptainer/Singularity (cluster HPC, reproductibilité)
+
+```bash
+# Dry-run
+snakemake --use-singularity -n --snakefile workflow/Snakefile
+
+# Vrai run (local)
+snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
+
+# Vrai run sur cluster avec données sur /scratch
+snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --snakefile workflow/Snakefile
+```
+
+> **Piège montages cluster** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
+> Si tes données sont sur `/scratch` (ou `/work`, `/projects`…), ajoute
+> `--singularity-args "--bind /scratch"` pour les rendre visibles depuis l'intérieur du conteneur.
+
+#### Images utilisées
+
+| Règle | Image BioContainers |
+|-------|---------------------|
+| `extract_isolate` | `quay.io/biocontainers/samtools:1.21--h50ea8bc_0` |
+| `run_minigraph` | `quay.io/biocontainers/minigraph:0.21--h577a1d6_3` |
 
 ## Sortie
 
@@ -85,7 +112,7 @@ all_results/
 
 ## Une fois que ça marche…
 
-Étapes suivantes possibles, dans l'ordre :
+Étapes suivantes possibles :
 1. Ajouter la détection auto fichier / répertoire
 2. Ajouter une option "référence" dans la config
 3. Ajouter PGGB comme 2e constructeur
