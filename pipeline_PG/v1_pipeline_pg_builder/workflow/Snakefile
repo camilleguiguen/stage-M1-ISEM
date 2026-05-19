@@ -1,13 +1,13 @@
 # =============================================================================
-# PanQueSt - Pipeline v1 : multi-FASTA -> graphe Minigraph
+# PanQueSt - Pipeline v2 : multi-FASTA -> graphe de pangénome
 # =============================================================================
 #
 # ENTRÉE  : un fichier multi-FASTA (1 record = 1 isolat)
 # SORTIE  : <output_dir>/<run_name>/
-#             ├── per_sample/<isolat>.fa     (dossier avec 1 FASTA par isolat)
-#             ├── pangenome.gfa              (le graphe Minigraph)
-#             ├── minigraph.log              (log d'exécution)
-#             └── run_summary.txt            (résumé global)
+#             ├── per_sample/<isolat>.fa
+#             ├── Minigraph/pangenome_MC.gfa  (si tools.minigraph: true)
+#             ├── PGGB/pangenome.gfa          (si tools.pggb: true)
+#             └── runs_summary_update.txt
 # =============================================================================
 
 from pathlib import Path
@@ -15,8 +15,7 @@ from pathlib import Path
 # --- 1. Chargement de la config ---------------------------------------------
 configfile: "config/config.yaml"
 
-# --- 2. Lecture du multi-FASTA pour récupérer la liste des isolats ----------
-# On lit juste les lignes commençant par ">" pour obtenir les noms.
+# --- 2. Variables globales --------------------------------------------------
 
 def read_record_names(fasta_path):
     names = []
@@ -40,89 +39,61 @@ REFERENCE = SAMPLES[0]
 RUN_NAME = f"result_{config['species']}_chrom{config['chrom']}_{config['other']}"
 RUN_DIR  = Path(config["output_dir"]) / RUN_NAME
 
-# Petit affichage au debut dans la console
+# --- 3. Fonctions helper pour cibles/inputs conditionnels -------------------
+
+def active_tools():
+    # Retourne la liste des outils activés dans config["tools"],
+    # chacun décrit par son label, son GFA de sortie et son log.
+    # Point d'entrée unique : ajouter un outil ici suffit à tout propager.
+    tools = []
+    if config["tools"].get("minigraph", True): #ici true car "activé par défaut (contrairement a pggb qui ne dois pas etre lancé au hasard car lourd, il ne sera lancé que si le fichier de config l'indique)"
+        tools.append({
+            "label": "Minigraph",
+            "gfa":   str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
+            "log":   str(RUN_DIR / "Minigraph" / "minigraph.log"),
+        })
+    if config["tools"].get("pggb", False):
+        tools.append({
+            "label": "PGGB",
+            "gfa":   str(RUN_DIR / "PGGB" / "pangenome.gfa"),
+            "log":   str(RUN_DIR / "PGGB" / "pggb.log"),
+        })
+    return tools
+
+def get_targets():
+    # Cibles finales de rule all : GFAs des outils actifs + le résumé.
+    return [t["gfa"] for t in active_tools()] + [str(RUN_DIR / "runs_summary_update.txt")]
+
+def summary_gfas(wildcards):
+    # Input gfas de build_summary : un GFA par outil actif.
+    return [t["gfa"] for t in active_tools()]
+
+def summary_logs(wildcards):
+    # Input logs de build_summary : un log par outil actif, même ordre que summary_gfas.
+    return [t["log"] for t in active_tools()]
+
+def summary_labels(wildcards):
+    # Params labels de build_summary : noms lisibles, même ordre que summary_gfas.
+    return [t["label"] for t in active_tools()]
+
+# --- 4. Affichage au démarrage ----------------------------------------------
 onstart:
+    tools_on = [k for k, v in config["tools"].items() if v]
     print("=" * 60)
     print(f"  Run    : {RUN_NAME}")
     print(f"  Input  : {config['input']}")
     print(f"  Total dans le FASTA : {len(ALL_NAMES)}")
     print(f"  Sélectionnés ({len(SAMPLES)}) : {SAMPLES}")
     print(f"  Référence : {REFERENCE}")
+    print(f"  Outils    : {tools_on}")
     print("=" * 60)
 
-
-# --- 3. Cible finale 
-# "rule all" liste ce qu'on veut obtenir à la fin.
-
+# --- 5. Cible finale --------------------------------------------------------
 rule all:
     input:
-        str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
-        str(RUN_DIR / "runs_summary_update.txt"),
+        get_targets()
 
-
-
-
-
-#------------------------------------RULES----------------------------------------#
-#_________________________________________________________________________________#
-
-# --- 4. Étape 1 : extraire chaque isolat dans son propre FASTA 
-# Cette règle tourne UNE FOIS PAR ISOLAT (wildcard {sample}).
-
-rule extract_isolate:
-    input:
-        multifasta = config["input"],
-    output:
-        fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
-    conda:
-        "envs/minigraph.yaml"
-    container:
-        "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
-    shell:
-        """
-        samtools faidx {input.multifasta} {wildcards.sample} > {output.fa}
-        """
-
-#_________________________________________________________________________________#
-
-# --- 5. Étape 2 : lancer Minigraph 
-# dans Minigraph : référence en premier, puis le reste.
-
-rule run_minigraph:
-    input:
-        fastas = expand(
-            str(RUN_DIR / "per_sample" / "{sample}.fa"),
-            sample=SAMPLES,
-        ),
-    output:
-        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
-        log = str(RUN_DIR / "Minigraph" / "minigraph.log"),
-    params:
-        min_sv_len = config["minigraph"]["min_sv_len"],
-    threads:
-        config["minigraph"]["threads"]
-    conda:
-        "envs/minigraph.yaml"
-    container:
-        "docker://quay.io/biocontainers/minigraph:0.21--h577a1d6_3"
-    shell:
-        """
-        minigraph -cxggs -L {params.min_sv_len} -t {threads} {input.fastas} > {output.gfa} 2> {output.log}
-        """
-
-#_________________________________________________________________________________#
-
-# --- 6. Étape 3 : construire un résumé du run avec qq stats-------------------------------
-
-rule build_summary:
-    input:
-        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
-        log = str(RUN_DIR / "Minigraph" / "minigraph.log"),
-    output:
-        summary = str(RUN_DIR / "runs_summary_update.txt"),
-    params:
-        run_name = RUN_NAME,
-        samples  = SAMPLES,
-        ref      = REFERENCE,
-    script:
-        "scripts/gfa_stats.py"
+# --- 6. Règles par outil ----------------------------------------------------
+include: "rules/minigraph.smk"
+include: "rules/pggb.smk"
+include: "rules/report.smk"

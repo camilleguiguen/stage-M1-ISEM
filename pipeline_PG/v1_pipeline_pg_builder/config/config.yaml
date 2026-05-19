@@ -29,3 +29,16 @@ strip_suffix: null
 minigraph:
   min_sv_len: 50      # -L : taille minimale d'une SV (défaut 50)
   threads: 4
+
+# --- Sélection des constructeurs --------------------------------------------
+# Mettre true pour activer, false pour désactiver.
+tools:
+  minigraph: true
+  pggb: true
+
+# --- Paramètres PGGB --------------------------------------------------------
+pggb:
+  n_haplotypes: null   # null = auto (nombre d'isolats sélectionnés)
+  segment_length: 5000 # -s : longueur de segment
+  percent_identity: 90 # -p : % identité minimum
+  threads: 4

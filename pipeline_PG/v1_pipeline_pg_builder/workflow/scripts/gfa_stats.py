@@ -1,4 +1,4 @@
-"""Calcule des stats sur un GFA et écrit un run_summary.txt.
+"""Calcule des stats sur un ou plusieurs GFA et écrit un runs_summary_update.txt.
 
 Appelé par la règle `build_summary` du Snakefile. Snakemake fournit
 automatiquement la variable `snakemake` avec les input/output/params.
@@ -46,12 +46,13 @@ def gfa_stats(gfa_path):
 
 
 # --- Code exécuté par Snakemake ---------------------------------------------
-gfa = snakemake.input.gfa
-log_path = snakemake.input.log
+p   = snakemake.params
 out = Path(snakemake.output.summary)
-p = snakemake.params
 
-stats = gfa_stats(gfa)
+# inputs peuvent être une str (1 fichier) ou une liste selon le nombre d'outils actifs
+gfas   = list(snakemake.input.gfas)   if not isinstance(snakemake.input.gfas,   str) else [snakemake.input.gfas]
+logs   = list(snakemake.input.logs)   if not isinstance(snakemake.input.logs,   str) else [snakemake.input.logs]
+labels = list(p.labels({}))           if callable(p.labels)                          else (list(p.labels) if not isinstance(p.labels, str) else [p.labels])
 
 lines = []
 lines.append("=" * 60)
@@ -61,17 +62,21 @@ lines.append(f"Date      : {datetime.now().isoformat(timespec='seconds')}")
 lines.append(f"Run       : {p.run_name}")
 lines.append(f"Isolats   : {', '.join(p.samples)} ({len(p.samples)})")
 lines.append(f"Référence : {p.ref}")
-lines.append("")
-lines.append("--- Statistiques du GFA ---")
-lines.append(f"  Fichier        : {gfa}")
-lines.append(f"  Segments (S)   : {stats['segments']:>10,}")
-lines.append(f"  Liens (L)      : {stats['links']:>10,}")
-lines.append(f"  Paths (P)      : {stats['paths']:>10,}")
-lines.append(f"  Walks (W)      : {stats['walks']:>10,}")
-lines.append(f"  Taille totale  : {stats['total_bp']:>10,} bp")
-lines.append("")
-lines.append("--- Log Minigraph (extrait) ---")
-lines.extend("  " + ln for ln in Path(log_path).read_text().splitlines())
+
+for label, gfa, log_path in zip(labels, gfas, logs):
+    stats = gfa_stats(gfa)
+    lines.append("")
+    lines.append(f"--- {label} — Statistiques du GFA ---")
+    lines.append(f"  Fichier        : {gfa}")
+    lines.append(f"  Segments (S)   : {stats['segments']:>10,}")
+    lines.append(f"  Liens (L)      : {stats['links']:>10,}")
+    lines.append(f"  Paths (P)      : {stats['paths']:>10,}")
+    lines.append(f"  Walks (W)      : {stats['walks']:>10,}")
+    lines.append(f"  Taille totale  : {stats['total_bp']:>10,} bp")
+    lines.append("")
+    lines.append(f"--- {label} — Log (extrait) ---")
+    lines.extend("  " + ln for ln in Path(log_path).read_text().splitlines())
+
 lines.append("=" * 60)
 
 out.write_text("\n".join(lines) + "\n")
