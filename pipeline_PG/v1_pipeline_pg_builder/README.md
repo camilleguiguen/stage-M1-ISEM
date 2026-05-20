@@ -119,6 +119,20 @@ snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --sna
 | `prepare_pansn_multifasta` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
 | `run_pggb` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
 
+## Visualisation d'images png du pangénome
+
+Activée avec `tools.visualization: true` dans `config.yaml`. Nécessite `--use-singularity`.
+
+| Cas | Ce qui est généré |
+|-----|-------------------|
+| Minigraph seul | `Minigraph/bandage_MG.png` |
+| PGGB seul | `PGGB/visu_images/bandage.png` + PNGs générés par PGGB déplacés dans `visu_images/` |
+| Les deux | Les deux cas ci-dessus |
+
+Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inversions, positions…) sont déplacés dans `PGGB/visu_images/` en même temps que l'image Bandage.
+
+> **Remarque Minigraph** : pas de visualisation `odgi` pour Minigraph car ses GFA ne contiennent pas de `Path` — Bandage uniquement.
+
 ## Sortie
 
 ```
@@ -128,11 +142,15 @@ all_results/
     │   └── *.fa
     ├── Minigraph/                     (si tools.minigraph: true)
     │   ├── pangenome_MG.gfa
-    │   └── minigraph.log
+    │   ├── minigraph.log
+    │   └── bandage_MG.png             (si tools.visualization: true)
     ├── PGGB/                          (si tools.pggb: true)
     │   ├── all.fa.gz  + .fai + .gzi  (multi-FASTA PanSN intermédiaire)
     │   ├── pangenome.gfa
-    │   └── pggb.log
+    │   ├── pggb.log
+    │   └── visu_images/               (si tools.visualization: true)
+    │       ├── bandage.png
+    │       └── *.png                  (visuels odgi générés par PGGB)
     └── runs_summary_update.txt        (agrège tous les constructeurs actifs)
 ```
 
@@ -143,4 +161,3 @@ all_results/
 2. Ajouter une option "référence" dans la config
 3. Ajouter Minigraph-Cactus
 4. Ajouter le profil SLURM pour GenOuest
-5. Ajouter le profil SLURM pour GenOuest
