@@ -5,6 +5,7 @@
 # Chemin vers le fichier multi-FASTA d'entrée
 # Fichier où chaque (>nom) = un isolat (assemblage complet)
 input: "data/mes_data_assemblees.fasta"
+#input: "/scratch/cguiguen/v1_pipeline_pg_builder/test_data/generated_testfile.fasta"
 
 # --- Identifiant du run (compose le nom du dossier de sortie) ---------------
 # Dossier créé : all_results/result_<species>_chrom<chrom>_<other>/

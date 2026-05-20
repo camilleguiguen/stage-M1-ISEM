@@ -51,7 +51,7 @@ def active_tools():
             "label":   "Minigraph",
             "gfa":     str(RUN_DIR / "Minigraph" / "pangenome_MG.gfa"),
             "log":     str(RUN_DIR / "Minigraph" / "minigraph.log"),
-            "bandage": str(RUN_DIR / "Minigraph" / "bandage.png"),
+            "bandage": str(RUN_DIR / "Minigraph" / "bandage_MG.png"),
         })
     if config["tools"].get("pggb", False):
         tools.append({
@@ -104,9 +104,9 @@ onsuccess:
     print("  Pour rapatrier les résultats des visu en local :")
     print(f"  scp -r {user}@<login_node>:{RUN_DIR} .")
     print("  Pour l'instant pour camille (changer noms fic):")
-    print ("    PATH_RES=//scratch/cguiguen/v1_pipeline_pg_builder/all_results/result_ecoli_chrom1_testv?/ \
-                scp -r cguiguen@genossh.genouest.org:$PATH_RES/PGGB/visu_images ~/Documents/data_from_cluster/ \
-                scp cguiguen@genossh.genouest.org:$PATH_RES/Minigraph/bandage_MG.png ~/Documents/data_from_cluster/ ")
+    print ("    PATH_RES=//scratch/cguiguen/v1_pipeline_pg_builder/all_results/result_ecoli_chrom1_testv?/")
+    print ("    scp -r cguiguen@genossh.genouest.org:$PATH_RES/PGGB/visu_images ~/Documents/data_from_cluster/")
+    print ("    scp cguiguen@genossh.genouest.org:$PATH_RES/Minigraph/bandage_MG.png ~/Documents/data_from_cluster/ ")
     print("=" * 60 + "\n")
 
 # --- 5. Cible finale --------------------------------------------------------

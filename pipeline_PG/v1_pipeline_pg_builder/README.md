@@ -19,28 +19,18 @@ pipeline_v1/
     └── scripts/gfa_stats.py  ← stats + résumé global
 ```
 
-## Pipeline = 5 règles enchaînées
+## Règles du pipeline
 
-```
-multi-FASTA d'entrée
-        │
-        ├──────────────────────────────────────┐
-        │  rule extract_isolate                │  rule prepare_pansn_multifasta
-        │  (1 fois par isolat)                 │  (conversion PanSN directe)
-        ▼                                      ▼
-per_sample/<isolat>.fa              PGGB/all.fa.gz  (PanSN bgzippé)
-        │                                      │
-        │  rule run_minigraph                  │  rule run_pggb
-        ▼                                      ▼
-Minigraph/pangenome_MG.gfa          PGGB/pangenome.gfa
-        │                                      │
-        └──────────────┬───────────────────────┘
-                       │  rule build_summary
-                       ▼
-              runs_summary_update.txt
-```
+- **`extract_isolate`** — découpe le multi-FASTA d'entrée en un fichier par isolat (nécessaire pour Minigraph)
+- **`prepare_pansn_multifasta`** — convertit directement le multi-FASTA au format PanSN bgzippé + indexé (nécessaire pour PGGB)
+- **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
+- **`run_pggb`** — construit le graphe de pangénome avec PGGB
+- **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
+- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualization: true)*
+- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualization: true)*
 
-Snakemake déduit cet ordre **seul** à partir des input/output des règles.
+
+**Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
 Seules les branches activées dans `tools:` sont exécutées.
 
 ## Configuration
