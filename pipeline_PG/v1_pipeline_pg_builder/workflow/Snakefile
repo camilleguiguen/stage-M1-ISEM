@@ -1,11 +1,11 @@
 # =============================================================================
-# PanQueSt - Pipeline v2 : multi-FASTA -> graphe de pangénome
+# PanQueSt - Pipeline v1 : multi-FASTA -> graphe de pangénome
 # =============================================================================
 #
 # ENTRÉE  : un fichier multi-FASTA (1 record = 1 isolat)
 # SORTIE  : <output_dir>/<run_name>/
 #             ├── per_sample/<isolat>.fa
-#             ├── Minigraph/pangenome_MC.gfa  (si tools.minigraph: true)
+#             ├── Minigraph/pangenome_MG.gfa  (si tools.minigraph: true)
 #             ├── PGGB/pangenome.gfa          (si tools.pggb: true)
 #             └── runs_summary_update.txt
 # =============================================================================
@@ -48,21 +48,28 @@ def active_tools():
     tools = []
     if config["tools"].get("minigraph", True): #ici true car "activé par défaut (contrairement a pggb qui ne dois pas etre lancé au hasard car lourd, il ne sera lancé que si le fichier de config l'indique)"
         tools.append({
-            "label": "Minigraph",
-            "gfa":   str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
-            "log":   str(RUN_DIR / "Minigraph" / "minigraph.log"),
+            "label":   "Minigraph",
+            "gfa":     str(RUN_DIR / "Minigraph" / "pangenome_MG.gfa"),
+            "log":     str(RUN_DIR / "Minigraph" / "minigraph.log"),
+            "bandage": str(RUN_DIR / "Minigraph" / "bandage.png"),
         })
     if config["tools"].get("pggb", False):
         tools.append({
-            "label": "PGGB",
-            "gfa":   str(RUN_DIR / "PGGB" / "pangenome.gfa"),
-            "log":   str(RUN_DIR / "PGGB" / "pggb.log"),
+            "label":   "PGGB",
+            "gfa":     str(RUN_DIR / "PGGB" / "pangenome.gfa"),
+            "log":     str(RUN_DIR / "PGGB" / "pggb.log"),
+            "bandage": str(RUN_DIR / "PGGB" / "visu_images" / "bandage.png"),
         })
     return tools
 
 def get_targets():
     # Cibles finales de rule all : GFAs des outils actifs + le résumé.
-    return [t["gfa"] for t in active_tools()] + [str(RUN_DIR / "runs_summary_update.txt")]
+    # Si visualization: true, ajoute les images Bandage de chaque outil actif.
+    targets = [t["gfa"] for t in active_tools()]
+    targets.append(str(RUN_DIR / "runs_summary_update.txt"))
+    if config["tools"].get("visualization", False):
+        targets += [t["bandage"] for t in active_tools()]
+    return targets
 
 def summary_gfas(wildcards):
     # Input gfas de build_summary : un GFA par outil actif.
@@ -88,6 +95,20 @@ onstart:
     print(f"  Outils    : {tools_on}")
     print("=" * 60)
 
+# --- Affichage rappel commandes scp pour les visu à la fin du pipeline -----------------------------------------
+onsuccess:
+    import os
+    user = os.getenv("USER", "user")
+    print("\n" + "=" * 60)
+    print("  Pipeline terminé !")
+    print("  Pour rapatrier les résultats des visu en local :")
+    print(f"  scp -r {user}@<login_node>:{RUN_DIR} .")
+    print("  Pour l'instant pour camille (changer noms fic):")
+    print ("    PATH_RES=//scratch/cguiguen/v1_pipeline_pg_builder/all_results/result_ecoli_chrom1_testv?/ \
+                scp -r cguiguen@genossh.genouest.org:$PATH_RES/PGGB/visu_images ~/Documents/data_from_cluster/ \
+                scp cguiguen@genossh.genouest.org:$PATH_RES/Minigraph/bandage_MG.png ~/Documents/data_from_cluster/ ")
+    print("=" * 60 + "\n")
+
 # --- 5. Cible finale --------------------------------------------------------
 rule all:
     input:
@@ -97,3 +118,4 @@ rule all:
 include: "rules/minigraph.smk"
 include: "rules/pggb.smk"
 include: "rules/report.smk"
+include: "rules/visu.smk"

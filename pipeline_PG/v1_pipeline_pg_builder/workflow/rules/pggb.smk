@@ -27,7 +27,7 @@ rule prepare_pansn_multifasta:
         mkdir -p $(dirname {output.fa})
 
         # Pour chaque isolat : samtools extrait sa séquence,
-        # awk renomme son header au format PanSN (>sample#1#contig)
+        # awk renomme header au format PanSN (>sample#1#contig)
         for s in {params.samples}; do
             samtools faidx {input.multifasta} "$s" | \
                 awk -v s="$s" '/^>/{{split($1,a," "); name=substr(a[1],2); print ">"s"#1#"name; next}}{{print}}'

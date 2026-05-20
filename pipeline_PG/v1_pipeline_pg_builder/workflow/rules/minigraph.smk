@@ -14,7 +14,7 @@ rule extract_isolate:
     output:
         fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
     conda:
-        "../envs/minigraph.yaml"
+        "../envs/minigraph.yaml" #a enlever a terme ?
     container:
         "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
     shell:
@@ -33,7 +33,7 @@ rule run_minigraph:
             sample=SAMPLES,
         ),
     output:
-        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MC.gfa"),
+        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MG.gfa"),
         log = str(RUN_DIR / "Minigraph" / "minigraph.log"),
     params:
         min_sv_len = config["minigraph"]["min_sv_len"],

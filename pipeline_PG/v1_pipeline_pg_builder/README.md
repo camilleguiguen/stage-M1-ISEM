@@ -32,7 +32,7 @@ per_sample/<isolat>.fa              PGGB/all.fa.gz  (PanSN bgzippé)
         │                                      │
         │  rule run_minigraph                  │  rule run_pggb
         ▼                                      ▼
-Minigraph/pangenome_MC.gfa          PGGB/pangenome.gfa
+Minigraph/pangenome_MG.gfa          PGGB/pangenome.gfa
         │                                      │
         └──────────────┬───────────────────────┘
                        │  rule build_summary
@@ -127,7 +127,7 @@ all_results/
     ├── per_sample/
     │   └── *.fa
     ├── Minigraph/                     (si tools.minigraph: true)
-    │   ├── pangenome_MC.gfa
+    │   ├── pangenome_MG.gfa
     │   └── minigraph.log
     ├── PGGB/                          (si tools.pggb: true)
     │   ├── all.fa.gz  + .fai + .gzi  (multi-FASTA PanSN intermédiaire)
