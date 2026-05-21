@@ -2,7 +2,7 @@
 # visu.smk — visualisation des graphes de pangénome
 # =============================================================================
 # Variables globales utilisées : RUN_DIR
-# Activé uniquement si tools.visualization: true dans config.yaml.
+# Activé uniquement si tools.visualisation: true dans config.yaml.
 # Commande de lancement nécessaire : --use-singularity (image Bandage utilisée)
 # =============================================================================
 

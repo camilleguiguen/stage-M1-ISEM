@@ -64,10 +64,10 @@ def active_tools():
 
 def get_targets():
     # Cibles finales de rule all : GFAs des outils actifs + le résumé.
-    # Si visualization: true, ajoute les images Bandage de chaque outil actif.
+    # Si visualisation: true, ajoute les images Bandage de chaque outil actif.
     targets = [t["gfa"] for t in active_tools()]
     targets.append(str(RUN_DIR / "runs_summary_update.txt"))
-    if config["tools"].get("visualization", False):
+    if config["tools"].get("visualisation", False):
         targets += [t["bandage"] for t in active_tools()]
     return targets
 

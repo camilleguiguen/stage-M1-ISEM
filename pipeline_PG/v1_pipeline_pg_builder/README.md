@@ -1,7 +1,6 @@
 # PanQueSt – Pipeline v1 (Minigraph + PGGB)
 
 Prend un **multi-FASTA** en entrée et produit un ou plusieurs **graphes de pangénome** + un résumé global.
-Les constructeurs sont activables indépendamment dans la config.
 
 ## Structure
 
@@ -15,18 +14,18 @@ pipeline_v1/
     │   ├── pggb.smk           ← prepare_pansn_multifasta + run_pggb
     │   └── report.smk         ← build_summary
     ├── envs/
-    │   └── minigraph.yaml     ← env conda (minigraph + samtools)
-    └── scripts/gfa_stats.py  ← stats + résumé global
+    │   └── minigraph.yaml     ← env conda (minigraph + samtools + python)
+    └── scripts/gfa_stats.py   ← stats + résumé global
 ```
 
-## Configuration
+## Configuration (obligatoire)
 
 Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
 
 ```yaml
 input: "data/mes_data_assemblees.fasta"   # le multi-FASTA déjà assemblé
 
-#afin de construire le nom du dossier de sortie
+#afin de construire le nom du dossier de sortie : result_<species>_<chrom>_<other>
 species: "ecoli"
 chrom: "1"
 other: "test"
@@ -39,8 +38,10 @@ n_first: 5   # null = tous les isolats
 
 # --- Sélection et paramétrage des constructeurs ---
 tools:
-  minigraph: true   # activer/désactiver Minigraph
-  pggb: false       # activer/désactiver PGGB
+  minigraph: true       # activer/désactiver Minigraph
+  pggb: false           # activer/désactiver PGGB
+  visualisation: false  # true = génère et gère les images Bandage et ODGI
+
 
 minigraph:
   min_sv_len: 50
@@ -54,13 +55,18 @@ pggb:
 ```
 
 ## Lancement
-Pour pouvoir lancer le pipeline Snakemake il faut obligatoirement avoir un environnement où Snakemake est installé : voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
+**Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
+  - Avoir édité le **fichier de configuration** (voir ci dessus).
+  - Avoir un **environnement où Snakemake** est installé: voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
 Deux modes sont disponibles et peuvent coexister dans le même Snakefile. Recommandation : Mode Apptainer.
 
 ### Mode Apptainer/Singularity (requis pour PGGB, recommandé pour la reproductibilité)
 
 ```bash
+# Aller dans le bon répertoire 
+cd pipeline_PG/v1_pipeline_pg_builder/
+
 # Dry-run
 snakemake --use-singularity -n --snakefile workflow/Snakefile
 
@@ -107,8 +113,8 @@ snakemake --use-conda --cores 4 --snakefile workflow/Snakefile
 - **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
 - **`run_pggb`** — construit le graphe de pangénome avec PGGB
 - **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
-- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualization: true)*
-- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualization: true)*
+- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualisation: true)*
+- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualisation: true)*
 
 
 **Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
@@ -116,7 +122,7 @@ Seules les branches activées dans `tools:` sont exécutées.
 
 ## Visualisation d'images png du pangénome
 
-Activée avec `tools.visualization: true` dans `config.yaml`. Nécessite `--use-singularity`.
+Activée avec `tools.visualisation: true` dans `config.yaml`. Nécessite `--use-singularity`.
 
 | Cas | Ce qui est généré |
 |-----|-------------------|
@@ -138,12 +144,12 @@ all_results/
     ├── Minigraph/                     (si tools.minigraph: true)
     │   ├── pangenome_MG.gfa
     │   ├── minigraph.log
-    │   └── bandage_MG.png             (si tools.visualization: true)
+    │   └── bandage_MG.png             (si tools.visualisation: true)
     ├── PGGB/                          (si tools.pggb: true)
     │   ├── all.fa.gz  + .fai + .gzi  (multi-FASTA PanSN intermédiaire)
     │   ├── pangenome.gfa
     │   ├── pggb.log
-    │   └── visu_images/               (si tools.visualization: true)
+    │   └── visu_images/               (si tools.visualisation: true)
     │       ├── bandage.png
     │       └── *.png                  (visuels odgi générés par PGGB)
     └── runs_summary_update.txt        (résumé des runs généré avec gfa_stats.py)
@@ -157,3 +163,4 @@ all_results/
 3. Ajouter Minigraph-Cactus
 4. Voir s'il y a d'autres params intéréssants / outils
 5. ajout d'un formulaire pour remplir le fichier de config
+6. Ajouter règles SLURM pour tester sur grosses data !!

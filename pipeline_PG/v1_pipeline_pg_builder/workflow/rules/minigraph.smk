@@ -14,7 +14,7 @@ rule extract_isolate:
     output:
         fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
     conda:
-        "../envs/minigraph.yaml" #a enlever a terme ?
+        "../envs/minigraph.yaml" #a enlever à terme ?
     container:
         "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
     shell:

@@ -36,7 +36,7 @@ minigraph:
 tools:
   minigraph: true
   pggb: true
-  visualization: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
+  visualisation: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
 
 # --- Paramètres PGGB --------------------------------------------------------
 pggb:

@@ -1,5 +1,5 @@
 # =============================================================================
-# pggb.smk — préparation PanSN + construction du graphe PGGB
+# pggb.smk — préparation (PanSN) + construction du graphe PGGB
 # =============================================================================
 # Variables globales utilisées : config, RUN_DIR, SAMPLES
 # Nécessite --use-singularity (pas d'env conda pour ces règles).
