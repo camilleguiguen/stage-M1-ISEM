@@ -54,6 +54,7 @@ pggb:
 ```
 
 ## Lancement
+Pour pouvoir lancer le pipeline Snakemake il faut obligatoirement avoir un environnement où Snakemake est installé : voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
 Deux modes sont disponibles et peuvent coexister dans le même Snakefile. Recommandation : Mode Apptainer.
 
@@ -97,7 +98,7 @@ snakemake --use-conda --cores 4 --snakefile workflow/Snakefile
 | `run_minigraph` | `quay.io/biocontainers/minigraph:0.21--h577a1d6_3` |
 | `prepare_pansn_multifasta` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
 | `run_pggb` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
-> **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules si dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
+> **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules ci-dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
 
 ## Règles du pipeline
 
@@ -155,3 +156,4 @@ all_results/
 2. Ajouter une option "référence" dans la config
 3. Ajouter Minigraph-Cactus
 4. Voir s'il y a d'autres params intéréssants / outils
+5. ajout d'un formulaire pour remplir le fichier de config
