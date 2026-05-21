@@ -19,36 +19,25 @@ pipeline_v1/
     └── scripts/gfa_stats.py  ← stats + résumé global
 ```
 
-## Règles du pipeline
-
-- **`extract_isolate`** — découpe le multi-FASTA d'entrée en un fichier par isolat (nécessaire pour Minigraph)
-- **`prepare_pansn_multifasta`** — convertit directement le multi-FASTA au format PanSN bgzippé + indexé (nécessaire pour PGGB)
-- **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
-- **`run_pggb`** — construit le graphe de pangénome avec PGGB
-- **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
-- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualization: true)*
-- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualization: true)*
-
-
-**Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
-Seules les branches activées dans `tools:` sont exécutées.
-
 ## Configuration
 
-Édite `config/config.yaml` :
+Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
 
 ```yaml
 input: "data/mes_data_assemblees.fasta"   # le multi-FASTA déjà assemblé
 
+#afin de construire le nom du dossier de sortie
 species: "ecoli"
 chrom: "1"
 other: "test"
 
-output_dir: "all_results"
+# Répertoire de sortie racine (ne pas modifier hors besoins particuliers)
+output_dir: "all_results" 
 
+# Pour tester sur un sous-ensemble : N premiers isolats du fichier d'entrée.
 n_first: 5   # null = tous les isolats
 
-# --- Sélection des constructeurs ---
+# --- Sélection et paramétrage des constructeurs ---
 tools:
   minigraph: true   # activer/désactiver Minigraph
   pggb: false       # activer/désactiver PGGB
@@ -66,7 +55,24 @@ pggb:
 
 ## Lancement
 
-Deux modes sont disponibles et peuvent coexister dans le même Snakefile.
+Deux modes sont disponibles et peuvent coexister dans le même Snakefile. Recommandation : Mode Apptainer.
+
+### Mode Apptainer/Singularity (requis pour PGGB, recommandé pour la reproductibilité)
+
+```bash
+# Dry-run
+snakemake --use-singularity -n --snakefile workflow/Snakefile
+
+# Vrai run (en "local" sur cluster)
+snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
+
+# Vrai run sur cluster depuis local avec données sur /scratch
+snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --snakefile workflow/Snakefile
+```
+
+> **Attention** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
+> Si les données sont par exemple dans un rep `/scratch`, il faut ajouter
+> `--singularity-args "--bind /scratch"` pour les rendre visibles depuis l'intérieur du conteneur.
 
 ### Mode conda (Minigraph uniquement)
 
@@ -83,23 +89,6 @@ snakemake --use-conda -n --snakefile workflow/Snakefile
 snakemake --use-conda --cores 4 --snakefile workflow/Snakefile
 ```
 
-### Mode Apptainer/Singularity (requis pour PGGB, recommandé pour la reproductibilité)
-
-```bash
-# Dry-run
-snakemake --use-singularity -n --snakefile workflow/Snakefile
-
-# Vrai run (local)
-snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
-
-# Vrai run sur cluster avec données sur /scratch
-snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --snakefile workflow/Snakefile
-```
-
-> **Piège montages cluster** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
-> Si tes données sont sur `/scratch` (ou `/work`, `/projects`…), ajoute
-> `--singularity-args "--bind /scratch"` pour les rendre visibles depuis l'intérieur du conteneur.
-
 #### Images utilisées (Apptainer)
 
 | Règle | Image BioContainers |
@@ -108,6 +97,21 @@ snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --sna
 | `run_minigraph` | `quay.io/biocontainers/minigraph:0.21--h577a1d6_3` |
 | `prepare_pansn_multifasta` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
 | `run_pggb` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
+> **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules si dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
+
+## Règles du pipeline
+
+- **`extract_isolate`** — découpe le multi-FASTA d'entrée en un fichier par isolat (nécessaire pour Minigraph)
+- **`prepare_pansn_multifasta`** — convertit directement le multi-FASTA au format PanSN bgzippé + indexé (nécessaire pour PGGB)
+- **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
+- **`run_pggb`** — construit le graphe de pangénome avec PGGB
+- **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
+- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualization: true)*
+- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualization: true)*
+
+
+**Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
+Seules les branches activées dans `tools:` sont exécutées.
 
 ## Visualisation d'images png du pangénome
 
@@ -141,7 +145,7 @@ all_results/
     │   └── visu_images/               (si tools.visualization: true)
     │       ├── bandage.png
     │       └── *.png                  (visuels odgi générés par PGGB)
-    └── runs_summary_update.txt        (agrège tous les constructeurs actifs)
+    └── runs_summary_update.txt        (résumé des runs généré avec gfa_stats.py)
 ```
 
 ## Une fois que ça marche…
@@ -150,4 +154,4 @@ all_results/
 1. Ajouter la détection auto fichier / répertoire
 2. Ajouter une option "référence" dans la config
 3. Ajouter Minigraph-Cactus
-4. Ajouter le profil SLURM pour GenOuest
+4. Voir s'il y a d'autres params intéréssants / outils
