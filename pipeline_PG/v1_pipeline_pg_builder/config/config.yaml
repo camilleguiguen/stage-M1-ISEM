@@ -21,6 +21,9 @@ output_dir: "all_results"
 # Mettre `null` (ou supprimer la ligne) pour prendre tous les isolats.
 n_first: 5
 
+# Isolat de référence (premier de la liste si null)
+reference: null
+
 # Si les noms de records ont un suffixe commun à virer (ex: "_chr1"), le mettre
 # ici. Permet d'avoir des noms de fichiers plus propres dans la sortie.
 # null = garder les noms tels quels.
@@ -36,7 +39,12 @@ minigraph:
 tools:
   minigraph: true
   pggb: true
+  minigraph_cactus: false
   visualisation: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
+
+# --- Paramètres Minigraph-Cactus --------------------------------------------
+minigraph_cactus:
+  threads: 4
 
 # --- Paramètres PGGB --------------------------------------------------------
 pggb:

@@ -23,6 +23,22 @@ rule bandage_minigraph:
         """
 
 
+# --- Bandage pour Minigraph-Cactus ------------------------------------------
+# Génère une image PNG du graphe Minigraph-Cactus via Bandage
+
+rule bandage_mc:
+    input:
+        gfa = str(RUN_DIR / "MinigraphCactus" / "pangenome_MC.gfa"),
+    output:
+        png = str(RUN_DIR / "MinigraphCactus" / "bandage_MC.png"),
+    container:
+        "docker://quay.io/biocontainers/bandage:0.9.0--h9948957_0"
+    shell:
+        """
+        Bandage image {input.gfa} {output.png} --height 800
+        """
+
+
 # --- Bandage + collecte des png PGGB ------------------------------------
 # Génère une image Bandage du graphe PGGB et déplace tous les PNGs
 # produits automatiquement par PGGB dans le dossier visu_images/.
