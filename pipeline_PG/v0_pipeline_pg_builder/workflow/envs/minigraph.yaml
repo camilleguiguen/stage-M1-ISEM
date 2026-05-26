@@ -1,7 +1,0 @@
-name: panquest-minigraph
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - minigraph >=0.21
-  - gfatools
