@@ -124,6 +124,6 @@ rule all:
 # --- 6. Règles par outil ----------------------------------------------------
 include: "rules/minigraph.smk"
 include: "rules/pggb.smk"
-include: "rules/mini-cactus"
+include: "rules/mini-cactus.smk"
 include: "rules/report.smk"
 include: "rules/visu.smk"

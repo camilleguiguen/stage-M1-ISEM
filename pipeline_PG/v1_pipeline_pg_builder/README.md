@@ -1,4 +1,4 @@
-# PanQueSt – Pipeline v1 (Minigraph + PGGB)
+# PanQueSt – Pipeline v1 (Minigraph + PGGB + Minigraph-cactus)
 
 Prend un **multi-FASTA** en entrée et produit un ou plusieurs **graphes de pangénome** + un résumé global.
 
@@ -65,9 +65,28 @@ minigraph_cactus:
 ## Lancement
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
   - Avoir édité le **fichier de configuration** (voir ci dessus).
-  - Avoir un **environnement où Snakemake** est installé: voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
+  - Avoir un **environnement où Conda/Mamba** est installé (pour que le SLURM installe Snakemake). 
+  - Si le SLURM echoue à cause de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
-Deux modes sont disponibles et peuvent coexister dans le même Snakefile. Recommandation : Mode Apptainer.
+### Via le script SLURM (recommandé sur cluster)
+
+Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est installé et le télécharge si besoin, puis lance le pipeline.
+
+```bash
+# Copier les données sur /scratch et aller dans le bon répertoire
+cd /scratch/cguiguen/v1_pipeline_pg_builder/
+
+sbatch run_pipeline.sh # Soumettre le job SLURM 
+
+squeue -u $USER #Surveiller le job
+tail -f logs/pg_builder_<JOBID>.log # Consulter les logs en temps réel
+```
+
+> **Adapter avant soumission** : vérifier dans `run_pipeline.sh` les directives `--cpus-per-task`, `--mem`, `--time` et `--partition` selon les ressources disponibles sur le cluster.
+
+---
+
+Deux modes manuels sont également disponibles. Recommandation : Mode Apptainer.
 
 ### Mode Apptainer/Singularity (requis pour PGGB, recommandé pour la reproductibilité)
 
