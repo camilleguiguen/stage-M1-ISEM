@@ -1,9 +1,0 @@
-name: env-pipeline-v1
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - minigraph >=0.21
-  - samtools
-  - python >=3.10
-  - snakemake >=7

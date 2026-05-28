@@ -13,8 +13,6 @@ rule extract_isolate:
         multifasta = config["input"],
     output:
         fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
-    conda:
-        "../envs/minigraph.yaml" #a enlever à terme ?
     container:
         "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
     shell:
@@ -39,8 +37,6 @@ rule run_minigraph:
         min_sv_len = config["minigraph"]["min_sv_len"],
     threads:
         config["minigraph"]["threads"]
-    conda:
-        "../envs/minigraph.yaml"
     container:
         "docker://quay.io/biocontainers/minigraph:0.21--h577a1d6_3"
     shell:

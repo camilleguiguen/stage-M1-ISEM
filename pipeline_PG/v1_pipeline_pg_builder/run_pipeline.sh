@@ -20,7 +20,7 @@
 #SBATCH --cpus-per-task=8        # doit être >= threads max dans config.yaml
 #SBATCH --mem=32G
 #SBATCH --time=4:00:00
-#SBATCH --partition=normal       # partition GenOuest : normal / long / ...
+#SBATCH --partition=genouest
 
 # --- Vérification et installation de Snakemake -------------------------------
 check_and_install_snakemake() {

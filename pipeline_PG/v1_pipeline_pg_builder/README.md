@@ -15,8 +15,6 @@ pipeline_v1/
     │   ├── mini-cactus             ← prepare_seqfile + run_minigraph_cactus
     │   ├── report.smk              ← build_summary
     │   └── visu.smk                ← bandage_minigraph + bandage_mc + pggb_visu
-    ├── envs/
-    │   └── minigraph.yaml          ← env conda (minigraph + samtools + python)
     └── scripts/gfa_stats.py        ← stats + résumé global
 ```
 
@@ -73,12 +71,17 @@ minigraph_cactus:
 Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est installé et le télécharge si besoin, puis lance le pipeline.
 
 ```bash
-# Copier les données sur /scratch et aller dans le bon répertoire
-cd /scratch/cguiguen/v1_pipeline_pg_builder/
+# Le code reste dans /home (git pull ici), les données/résultats vont dans /scratch.
+# → Mettre des chemins absolus vers /scratch dans config/config.yaml :
+#     input:      "/scratch/<user>/data/mes_data.fasta"
+#     output_dir: "/scratch/<user>/all_results"
 
-sbatch run_pipeline.sh # Soumettre le job SLURM 
+# Lancer depuis /home où se trouve le code
+cd ~/path/to/v1_pipeline_pg_builder/
 
-squeue -u $USER #Surveiller le job
+sbatch run_pipeline.sh # Soumettre le job SLURM
+
+squeue -u $USER # Surveiller le job
 tail -f logs/pg_builder_<JOBID>.log # Consulter les logs en temps réel
 ```
 
@@ -86,42 +89,24 @@ tail -f logs/pg_builder_<JOBID>.log # Consulter les logs en temps réel
 
 ---
 
-Deux modes manuels sont également disponibles. Recommandation : Mode Apptainer.
-
-### Mode Apptainer/Singularity (requis pour PGGB, recommandé pour la reproductibilité)
+### Mode manuel (sans SLURM)
 
 ```bash
-# Aller dans le bon répertoire 
+# Aller dans le bon répertoire
 cd pipeline_PG/v1_pipeline_pg_builder/
 
 # Dry-run
 snakemake --use-singularity -n --snakefile workflow/Snakefile
 
-# Vrai run (en "local" sur cluster)
+# Vrai run (en local ou sur un nœud interactif)
 snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
 
-# Vrai run sur cluster depuis local avec données sur /scratch
+# Si les données sont dans /scratch
 snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --snakefile workflow/Snakefile
 ```
 
 > **Attention** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
-> Si les données sont par exemple dans un rep `/scratch`, il faut ajouter
-> `--singularity-args "--bind /scratch"` pour les rendre visibles depuis l'intérieur du conteneur.
-
-### Mode conda (Minigraph uniquement)
-
-> PGGB n'a pas d'env conda — il nécessite le mode Apptainer.
-
-```bash
-# Installer snakemake une fois
-mamba install -n base -c bioconda snakemake
-
-# Dry-run
-snakemake --use-conda -n --snakefile workflow/Snakefile
-
-# Vrai run
-snakemake --use-conda --cores 4 --snakefile workflow/Snakefile
-```
+> Si les données sont dans `/scratch`, ajouter `--singularity-args "--bind /scratch"`.
 
 #### Images utilisées (Apptainer)
 
