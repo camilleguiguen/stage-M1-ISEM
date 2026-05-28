@@ -1,9 +1,10 @@
 # =============================================================================
-# PanQueSt - Pipeline v1 : multi-FASTA -> graphe de pangénome
+# PanQueSt - Pipeline v1 : répertoire de FASTAs -> graphes de pangénome
 # =============================================================================
 #
-# ENTRÉE  : un fichier multi-FASTA (1 record = 1 isolat)
-# SORTIE  : <output_dir>/<run_name>/
+# ENTRÉE  : un répertoire de fichiers FASTA (1 fichier = 1 run = 1 chromosome)
+#           Format des noms : <espece>_<chrom>_<commentaire>.fasta
+# SORTIE  : <output_dir>/result_<espece>_chrom<chrom>_<commentaire>/
 #             ├── per_sample/<isolat>.fa
 #             ├── Minigraph/pangenome_MG.gfa  (si tools.minigraph: true)
 #             ├── PGGB/pangenome.gfa          (si tools.pggb: true)
@@ -25,23 +26,40 @@ def read_record_names(fasta_path):
                 names.append(line[1:].split()[0]) #On enlève le > (le [1:]), on coupe sur les espaces (split()), et on prend le premier mot ([0])
     return names
 
-ALL_NAMES = read_record_names(config["input"])
+def fasta_to_run_name(fasta_path):
+    # "pdestructans_1_test.fasta" → "result_pdestructans_chrom1_test"
+    stem = Path(fasta_path).stem
+    parts = stem.split("_", 2)  # max 3 parties : espece, chrom, commentaire
+    if len(parts) < 3:
+        raise ValueError(
+            f"Nom de fichier invalide : {Path(fasta_path).name}\n"
+            f"Format attendu : <espece>_<chrom>_<commentaire>.fasta"
+        )
+    return f"result_{parts[0]}_chrom{parts[1]}_{parts[2]}"
 
-# Sous-ensemble pour les tests : N premiers isolats (null/absent = tous)
+# Découverte des fichiers FASTA dans le répertoire d'entrée
+input_dir = Path(config["input_dir"])
+fasta_files = sorted(input_dir.glob("*.fasta"))
+
+# RUNS : dict run_name → {fasta, samples, reference, run_dir}
+# Un run = un fichier FASTA = un chromosome = un dossier de sortie
 n = config.get("n_first")
-SAMPLES = ALL_NAMES[:n] if n else ALL_NAMES #prend le sous jeu de données
-
-# Référence = isolat spécifié dans config, ou 1er de la sélection si null
-REFERENCE = config.get("reference") or SAMPLES[0]
-
-# Dossier de sortie du run
-#pour l'instant (species, chrom, other) mais a terme je decouperais le nom de l'input
-RUN_NAME = f"result_{config['species']}_chrom{config['chrom']}_{config['other']}"
-RUN_DIR  = Path(config["output_dir"]) / RUN_NAME
+RUNS = {}
+for fasta_path in fasta_files:
+    run_name = fasta_to_run_name(fasta_path)
+    all_names = read_record_names(str(fasta_path))
+    samples   = all_names[:n] if n else all_names  # sous-ensemble si n_first défini
+    reference = config.get("reference") or samples[0]
+    RUNS[run_name] = {
+        "fasta":     str(fasta_path),
+        "samples":   samples,
+        "reference": reference,
+        "run_dir":   Path(config["output_dir"]) / run_name,
+    }
 
 # --- 3. Fonctions helper pour cibles/inputs conditionnels -------------------
 
-def active_tools():
+def active_tools(run_dir):
     # Retourne la liste des outils activés dans config["tools"],
     # chacun décrit par son label, son GFA de sortie et son log.
     # Point d'entrée unique : ajouter un outil ici suffit à tout propager.
@@ -49,71 +67,75 @@ def active_tools():
     if config["tools"].get("minigraph", True): #ici true car "activé par défaut (contrairement a pggb qui ne dois pas etre lancé au hasard car lourd, il ne sera lancé que si le fichier de config l'indique)"
         tools.append({
             "label":   "Minigraph",
-            "gfa":     str(RUN_DIR / "Minigraph" / "pangenome_MG.gfa"),
-            "log":     str(RUN_DIR / "Minigraph" / "minigraph.log"),
-            "bandage": str(RUN_DIR / "Minigraph" / "bandage_MG.png"),
+            "gfa":     str(run_dir / "Minigraph" / "pangenome_MG.gfa"),
+            "log":     str(run_dir / "Minigraph" / "minigraph.log"),
+            "bandage": str(run_dir / "Minigraph" / "bandage_MG.png"),
         })
     if config["tools"].get("pggb", False):
         tools.append({
             "label":   "PGGB",
-            "gfa":     str(RUN_DIR / "PGGB" / "pangenome.gfa"),
-            "log":     str(RUN_DIR / "PGGB" / "pggb.log"),
-            "bandage": str(RUN_DIR / "PGGB" / "visu_images" / "bandage.png"),
+            "gfa":     str(run_dir / "PGGB" / "pangenome.gfa"),
+            "log":     str(run_dir / "PGGB" / "pggb.log"),
+            "bandage": str(run_dir / "PGGB" / "visu_images" / "bandage.png"),
         })
     if config["tools"].get("minigraph_cactus", False):
         tools.append({
             "label":   "MinigraphCactus",
-            "gfa":     str(RUN_DIR / "MinigraphCactus" / "pangenome_MC.gfa"),
-            "log":     str(RUN_DIR / "MinigraphCactus" / "minigraph_cactus.log"),
-            "bandage": str(RUN_DIR / "MinigraphCactus" / "bandage_MC.png"),
+            "gfa":     str(run_dir / "MinigraphCactus" / "pangenome_MC.gfa"),
+            "log":     str(run_dir / "MinigraphCactus" / "minigraph_cactus.log"),
+            "bandage": str(run_dir / "MinigraphCactus" / "bandage_MC.png"),
         })
     return tools
 
 def get_targets():
-    # Cibles finales de rule all : GFAs des outils actifs + le résumé.
+    # Cibles finales de rule all : GFAs + résumé pour chaque run détecté.
     # Si visualisation: true, ajoute les images Bandage de chaque outil actif.
-    targets = [t["gfa"] for t in active_tools()]
-    targets.append(str(RUN_DIR / "runs_summary_update.txt"))
-    if config["tools"].get("visualisation", False):
-        targets += [t["bandage"] for t in active_tools()]
+    targets = []
+    for run in RUNS.values():
+        rd = run["run_dir"]
+        targets += [t["gfa"] for t in active_tools(rd)]
+        targets.append(str(rd / "runs_summary_update.txt"))
+        if config["tools"].get("visualisation", False):
+            targets += [t["bandage"] for t in active_tools(rd)]
     return targets
 
 def summary_gfas(wildcards):
-    # Input gfas de build_summary : un GFA par outil actif.
-    return [t["gfa"] for t in active_tools()]
+    # Input gfas de build_summary : un GFA par outil actif pour ce run.
+    return [t["gfa"] for t in active_tools(RUNS[wildcards.run]["run_dir"])]
 
 def summary_logs(wildcards):
     # Input logs de build_summary : un log par outil actif, même ordre que summary_gfas.
-    return [t["log"] for t in active_tools()]
+    return [t["log"] for t in active_tools(RUNS[wildcards.run]["run_dir"])]
 
 def summary_labels(wildcards):
     # Params labels de build_summary : noms lisibles, même ordre que summary_gfas.
-    return [t["label"] for t in active_tools()]
+    return [t["label"] for t in active_tools(RUNS[wildcards.run]["run_dir"])]
 
 # --- 4. Affichage au démarrage ----------------------------------------------
 onstart:
     tools_on = [k for k, v in config["tools"].items() if v]
     print("=" * 60)
-    print(f"  Run    : {RUN_NAME}")
-    print(f"  Input  : {config['input']}")
-    print(f"  Total dans le FASTA : {len(ALL_NAMES)}")
-    print(f"  Sélectionnés ({len(SAMPLES)}) : {SAMPLES}")
-    print(f"  Référence : {REFERENCE}")
+    print(f"  Dossier d'entrée : {config['input_dir']}")
+    print(f"  Runs détectés    : {len(RUNS)}")
+    for run_name, run in RUNS.items():
+        print(f"    [{run_name}]")
+        print(f"      FASTA     : {run['fasta']}")
+        print(f"      Isolats   : {len(run['samples'])} → {run['samples']}")
+        print(f"      Référence : {run['reference']}")
     print(f"  Outils    : {tools_on}")
     print("=" * 60)
 
 # --- Affichage rappel commandes scp pour les visu à la fin du pipeline -----------------------------------------
 onsuccess:
     import os
-    user = os.getenv("USER", "user")
+    user     = os.getenv("USER", "user")
+    out_dir  = config["output_dir"]
     print("\n" + "=" * 60)
     print("  Pipeline terminé !")
-    print("  Pour rapatrier les résultats des visu en local :")
-    print(f"  scp -r {user}@<login_node>:{RUN_DIR} .")
+    print("  Pour rapatrier les résultats en local :")
+    print(f"  scp -r {user}@<login_node>:{out_dir} .")
     print("  Pour l'instant pour camille (changer noms fic):")
-    print ("    PATH_RES=//scratch/cguiguen/v1_pipeline_pg_builder/all_results/result_ecoli_chrom1_testv?/")
-    print ("    scp -r cguiguen@genossh.genouest.org:$PATH_RES/PGGB/visu_images ~/Documents/data_from_cluster/")
-    print ("    scp cguiguen@genossh.genouest.org:$PATH_RES/Minigraph/bandage_MG.png ~/Documents/data_from_cluster/ ")
+    print (f"    scp -r cguiguen@genossh.genouest.org:/scratch/cguiguen/v1_pipeline_pg_builder/{out_dir}/ ~/Documents/data_from_cluster/")
     print("=" * 60 + "\n")
 
 # --- 5. Cible finale --------------------------------------------------------

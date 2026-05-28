@@ -1,18 +1,20 @@
 # =============================================================================
 # minigraph.smk — préparation + construction du graphe Minigraph
 # =============================================================================
-# Variables globales utilisées : config, RUN_DIR, SAMPLES
+# Variables globales utilisées : config, RUNS (dict run→{fasta,samples,reference,run_dir})
+# Wildcard {run} : nom du dossier de sortie dérivé du nom du fichier FASTA d'entrée
 # =============================================================================
 
+OUTPUT_DIR = config["output_dir"]
 
 # --- Étape 1 : extraire chaque isolat dans son propre FASTA -----------------
-# Cette règle tourne UNE FOIS PAR ISOLAT (wildcard {sample}).
+# Cette règle tourne UNE FOIS PAR (run, isolat) (wildcards {run} et {sample}).
 
 rule extract_isolate:
     input:
-        multifasta = config["input"],
+        multifasta = lambda wc: RUNS[wc.run]["fasta"],
     output:
-        fa = str(RUN_DIR / "per_sample" / "{sample}.fa"),
+        fa = OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
     container:
         "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
     shell:
@@ -26,13 +28,15 @@ rule extract_isolate:
 
 rule run_minigraph:
     input:
-        fastas = expand(
-            str(RUN_DIR / "per_sample" / "{sample}.fa"),
-            sample=SAMPLES,
+        # La référence est placée en tête de liste, puis les autres isolats
+        fastas = lambda wc: (
+            [OUTPUT_DIR + f"/{wc.run}/per_sample/{RUNS[wc.run]['reference']}.fa"] +
+            [OUTPUT_DIR + f"/{wc.run}/per_sample/{s}.fa"
+             for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]]
         ),
     output:
-        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MG.gfa"),
-        log = str(RUN_DIR / "Minigraph" / "minigraph.log"),
+        gfa = OUTPUT_DIR + "/{run}/Minigraph/pangenome_MG.gfa",
+        log = OUTPUT_DIR + "/{run}/Minigraph/minigraph.log",
     params:
         min_sv_len = config["minigraph"]["min_sv_len"],
     threads:

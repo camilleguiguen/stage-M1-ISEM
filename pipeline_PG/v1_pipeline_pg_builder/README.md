@@ -23,17 +23,14 @@ pipeline_v1/
 Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
 
 ```yaml
-input: "data/mes_data_assemblees.fasta"   # le multi-FASTA déjà assemblé
+# Répertoire contenant les fichiers FASTA assemblés
+# Format des noms : <espece>_<chrom>_<commentaire>.fasta
+# Ex : pdestructans_1_run1.fasta → dossier result_pdestructans_chrom1_run1/
+input_dir: "data/"
 
-#afin de construire le nom du dossier de sortie : result_<species>_<chrom>_<other>
-species: "ecoli"
-chrom: "1"
-other: "test"
+output_dir: "all_results"
 
-# Répertoire de sortie racine (ne pas modifier hors besoins particuliers)
-output_dir: "all_results" 
-
-# Pour tester sur un sous-ensemble : N premiers isolats du fichier d'entrée.
+# Pour tester sur un sous-ensemble : N premiers isolats de chaque FASTA.
 n_first: 5   # null = tous les isolats
 
 # Isolat de référence (premier de la liste si null)
@@ -155,35 +152,38 @@ Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inv
 ## Sortie
 
 ```
+data/
+├── pdestructans_1_run1.fasta    ← un fichier FASTA = un run
+└── pdestructans_2_run1.fasta
+
 all_results/
-└── result_ecoli_chrom1_test/
-    ├── per_sample/
-    │   └── *.fa
-    ├── Minigraph/                         (si tools.minigraph: true)
-    │   ├── pangenome_MG.gfa
-    │   ├── minigraph.log
-    │   └── bandage_MG.png                 (si tools.visualisation: true)
-    ├── PGGB/                              (si tools.pggb: true)
-    │   ├── all.fa.gz  + .fai + .gzi      (multi-FASTA PanSN intermédiaire)
-    │   ├── pangenome.gfa
-    │   ├── pggb.log
-    │   └── visu_images/                   (si tools.visualisation: true)
-    │       ├── bandage.png
-    │       └── *.png                      (visuels odgi générés par PGGB)
-    ├── MinigraphCactus/                   (si tools.minigraph_cactus: true)
-    │   ├── seqfile.tsv                    (fichier d'entrée cactus-pangenome)
-    │   ├── pangenome_MC.gfa
-    │   ├── minigraph_cactus.log
-    │   └── bandage_MC.png                 (si tools.visualisation: true)
-    └── runs_summary_update.txt            (résumé des runs généré avec gfa_stats.py)
+├── result_pdestructans_chrom1_run1/    ← nom dérivé automatiquement du fichier FASTA
+│   ├── per_sample/
+│   │   └── *.fa
+│   ├── Minigraph/                         (si tools.minigraph: true)
+│   │   ├── pangenome_MG.gfa
+│   │   ├── minigraph.log
+│   │   └── bandage_MG.png                 (si tools.visualisation: true)
+│   ├── PGGB/                              (si tools.pggb: true)
+│   │   ├── all.fa.gz  + .fai + .gzi      (multi-FASTA PanSN intermédiaire)
+│   │   ├── pangenome.gfa
+│   │   ├── pggb.log
+│   │   └── visu_images/                   (si tools.visualisation: true)
+│   │       ├── bandage.png
+│   │       └── *.png                      (visuels odgi générés par PGGB)
+│   ├── MinigraphCactus/                   (si tools.minigraph_cactus: true)
+│   │   ├── seqfile.tsv
+│   │   ├── pangenome_MC.gfa
+│   │   ├── minigraph_cactus.log
+│   │   └── bandage_MC.png                 (si tools.visualisation: true)
+│   └── runs_summary_update.txt
+└── result_pdestructans_chrom2_run1/       ← second run traité en parallèle
+    └── ...
 ```
 
 ## Une fois que ça marche…
 
 Étapes suivantes possibles :
-1. Ajouter la détection auto fichier / répertoire
-2. Ajouter une option "référence" dans la config
-3. Ajouter Minigraph-Cactus
-4. Voir s'il y a d'autres params intéréssants / outils
+1. Voir s'il y a d'autres params intéréssants / outils
 5. ajout d'un formulaire pour remplir le fichier de config
 6. Ajouter règles SLURM pour tester sur grosses data !!

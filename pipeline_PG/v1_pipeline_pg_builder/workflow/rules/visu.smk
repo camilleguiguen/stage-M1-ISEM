@@ -1,20 +1,22 @@
 # =============================================================================
 # visu.smk — visualisation des graphes de pangénome
 # =============================================================================
-# Variables globales utilisées : RUN_DIR
+# Variables globales utilisées : config
+# Wildcard {run} : nom du dossier de sortie dérivé du nom du fichier FASTA d'entrée
 # Activé uniquement si tools.visualisation: true dans config.yaml.
 # Commande de lancement nécessaire : --use-singularity (image Bandage utilisée)
 # =============================================================================
 
+OUTPUT_DIR = config["output_dir"]
 
 # --- Bandage pour Minigraph --------------------------------------------------
-# Génère une image PNG du graphe Minigraph via Bandage 
+# Génère une image PNG du graphe Minigraph via Bandage
 # Pas d'image ODGI car pas de "path" dans les gfa produits par Minigraph
 rule bandage_minigraph:
     input:
-        gfa = str(RUN_DIR / "Minigraph" / "pangenome_MG.gfa"),
+        gfa = OUTPUT_DIR + "/{run}/Minigraph/pangenome_MG.gfa",
     output:
-        png = str(RUN_DIR / "Minigraph" / "bandage_MG.png"),
+        png = OUTPUT_DIR + "/{run}/Minigraph/bandage_MG.png",
     container:
         "docker://quay.io/biocontainers/bandage:0.9.0--h9948957_0"
     shell:
@@ -28,9 +30,9 @@ rule bandage_minigraph:
 
 rule bandage_mc:
     input:
-        gfa = str(RUN_DIR / "MinigraphCactus" / "pangenome_MC.gfa"),
+        gfa = OUTPUT_DIR + "/{run}/MinigraphCactus/pangenome_MC.gfa",
     output:
-        png = str(RUN_DIR / "MinigraphCactus" / "bandage_MC.png"),
+        png = OUTPUT_DIR + "/{run}/MinigraphCactus/bandage_MC.png",
     container:
         "docker://quay.io/biocontainers/bandage:0.9.0--h9948957_0"
     shell:
@@ -45,12 +47,12 @@ rule bandage_mc:
 
 rule pggb_visu:
     input:
-        gfa = str(RUN_DIR / "PGGB" / "pangenome.gfa"),
+        gfa = OUTPUT_DIR + "/{run}/PGGB/pangenome.gfa",
     output:
-        bandage = str(RUN_DIR / "PGGB" / "visu_images" / "bandage.png"),
+        bandage = OUTPUT_DIR + "/{run}/PGGB/visu_images/bandage.png",
     params:
-        pggb_dir = str(RUN_DIR / "PGGB"),
-        visu_dir = str(RUN_DIR / "PGGB" / "visu_images"),
+        pggb_dir = lambda wc: OUTPUT_DIR + f"/{wc.run}/PGGB",
+        visu_dir = lambda wc: OUTPUT_DIR + f"/{wc.run}/PGGB/visu_images",
     container:
         "docker://quay.io/biocontainers/bandage:0.9.0--h9948957_0"
     shell:

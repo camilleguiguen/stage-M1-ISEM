@@ -2,22 +2,16 @@
 # Fichier de configuration du pipeline - construction d'un graphe de pangenome
 # =============================================================================
 
-# Chemin vers le fichier multi-FASTA d'entrée
-# Fichier où chaque (>nom) = un isolat (assemblage complet)
-input: "data/mes_data_assemblees.fasta"
-#input: "/scratch/cguiguen/v1_pipeline_pg_builder/test_data/generated_testfile.fasta"
-
-# --- Identifiant du run (compose le nom du dossier de sortie) ---------------
-# Dossier créé : all_results/result_<species>_chrom<chrom>_<other>/
-species: "ecoli"
-chrom: "1"
-other: "test" #a nano au lancement 
+# Répertoire contenant les fichiers FASTA assemblés
+# Format des noms de fichiers : <espece>_<chrom>_<commentaire>.fasta
+# Ex : pdestructans_1_run1.fasta → dossier de sortie result_pdestructans_chrom1_run1/
+input_dir: "data/"
 
 # Répertoire de sortie racine
 output_dir: "all_results"
 
 # --- Sélection des isolats --------------------------------------------------
-# Pour tester sur un sous-ensemble : N premiers isolats du fichier d'entrée.
+# Pour tester sur un sous-ensemble : N premiers isolats de chaque FASTA.
 # Mettre `null` (ou supprimer la ligne) pour prendre tous les isolats.
 n_first: 5
 

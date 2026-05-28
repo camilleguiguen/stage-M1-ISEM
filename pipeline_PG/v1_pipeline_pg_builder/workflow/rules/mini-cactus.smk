@@ -1,8 +1,9 @@
 # =============================================================================
 # mini-cactus — préparation (seqfile) + construction du graphe
-#                         Minigraph-Cactus (cactus-pangenome)
+#               Minigraph-Cactus (cactus-pangenome)
 # =============================================================================
-# Variables globales utilisées : config, RUN_DIR, SAMPLES, REFERENCE
+# Variables globales utilisées : config, RUNS
+# Wildcard {run} : nom du dossier de sortie dérivé du nom du fichier FASTA d'entrée
 # Nécessite --use-singularity.
 #
 # Format d'entrée Cactus : un "seqfile" TSV (nom<TAB>chemin_fasta)
@@ -11,6 +12,7 @@
 # Les fichiers par isolat sont produits par extract_isolate (minigraph.smk).
 # =============================================================================
 
+OUTPUT_DIR = config["output_dir"]
 
 # --- Étape 1 : générer le seqfile TSV pour cactus-pangenome -----------------
 # Le seqfile liste : référence en 1re ligne, puis les autres isolats.
@@ -19,13 +21,17 @@
 rule prepare_seqfile:
     input:
         # Dépend de tous les FASTA par isolat produits par extract_isolate
-        fastas = expand(str(RUN_DIR / "per_sample" / "{sample}.fa"), sample=SAMPLES),
+        fastas = lambda wc: expand(
+            OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
+            run=wc.run,
+            sample=RUNS[wc.run]["samples"],
+        ),
     output:
-        seqfile = str(RUN_DIR / "MinigraphCactus" / "seqfile.tsv"),
+        seqfile = OUTPUT_DIR + "/{run}/MinigraphCactus/seqfile.tsv",
     params:
-        reference  = REFERENCE,
-        samples    = SAMPLES,
-        sample_dir = str(RUN_DIR / "per_sample"),
+        reference  = lambda wc: RUNS[wc.run]["reference"],
+        samples    = lambda wc: RUNS[wc.run]["samples"],
+        sample_dir = lambda wc: OUTPUT_DIR + f"/{wc.run}/per_sample",
     run:
         import os
         os.makedirs(os.path.dirname(output.seqfile), exist_ok=True)
@@ -42,14 +48,14 @@ rule prepare_seqfile:
 
 rule run_minigraph_cactus:
     input:
-        seqfile = str(RUN_DIR / "MinigraphCactus" / "seqfile.tsv"),
+        seqfile = OUTPUT_DIR + "/{run}/MinigraphCactus/seqfile.tsv",
     output:
-        gfa = str(RUN_DIR / "MinigraphCactus" / "pangenome_MC.gfa"),
-        log = str(RUN_DIR / "MinigraphCactus" / "minigraph_cactus.log"),
+        gfa = OUTPUT_DIR + "/{run}/MinigraphCactus/pangenome_MC.gfa",
+        log = OUTPUT_DIR + "/{run}/MinigraphCactus/minigraph_cactus.log",
     params:
-        outdir   = str(RUN_DIR / "MinigraphCactus"),
-        jobstore = str(RUN_DIR / "MinigraphCactus" / "jobstore"),
-        reference = REFERENCE,
+        outdir    = lambda wc: OUTPUT_DIR + f"/{wc.run}/MinigraphCactus",
+        jobstore  = lambda wc: OUTPUT_DIR + f"/{wc.run}/MinigraphCactus/jobstore",
+        reference = lambda wc: RUNS[wc.run]["reference"],
     threads:
         config["minigraph_cactus"].get("threads", 4)
     container:
@@ -61,7 +67,6 @@ rule run_minigraph_cactus:
         # cactus-pangenome produit un GFA dans outdir/
         # --maxCores limite le nombre de cœurs utilisés
         # --reference désigne l'isolat de référence (doit correspondre à la 1re ligne du seqfile)
-        
         cactus-pangenome {params.jobstore} {input.seqfile} \
             --outDir {params.outdir} \
             --outName pangenome_MC \
@@ -71,7 +76,6 @@ rule run_minigraph_cactus:
             > {output.log} 2>&1
 
         # Le GFA final est nommé pangenome_MC.gfa dans outDir
-        
         # → on vérifie qu'il est bien là (cactus peut varier le nom exact)
         final=$(ls {params.outdir}/pangenome_MC*.gfa 2>/dev/null | head -1)
         [ -n "$final" ] && [ "$final" != "{output.gfa}" ] && mv "$final" {output.gfa}

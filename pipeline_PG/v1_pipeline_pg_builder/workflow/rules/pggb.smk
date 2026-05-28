@@ -1,10 +1,12 @@
 # =============================================================================
 # pggb.smk — préparation (PanSN) + construction du graphe PGGB
 # =============================================================================
-# Variables globales utilisées : config, RUN_DIR, SAMPLES
+# Variables globales utilisées : config, RUNS
+# Wildcard {run} : nom du dossier de sortie dérivé du nom du fichier FASTA d'entrée
 # Nécessite --use-singularity (pas d'env conda pour ces règles).
 # =============================================================================
 
+OUTPUT_DIR = config["output_dir"]
 
 # --- Étape 1 : préparer le multi-FASTA PanSN pour PGGB ----------------------
 # PGGB exige un multi-FASTA bgzippé + indexé avec headers au format PanSN :
@@ -13,13 +15,13 @@
 
 rule prepare_pansn_multifasta:
     input:
-        multifasta = config["input"],
+        multifasta = lambda wc: RUNS[wc.run]["fasta"],
     output:
-        fa  = str(RUN_DIR / "PGGB" / "all.fa.gz"),
-        fai = str(RUN_DIR / "PGGB" / "all.fa.gz.fai"),
-        gzi = str(RUN_DIR / "PGGB" / "all.fa.gz.gzi"),
+        fa  = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz",
+        fai = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.fai",
+        gzi = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.gzi",
     params:
-        samples = SAMPLES,
+        samples = lambda wc: RUNS[wc.run]["samples"],
     container:
         "docker://quay.io/biocontainers/pggb:0.7.4--h9ee0642_0"
     shell:
@@ -42,17 +44,17 @@ rule prepare_pansn_multifasta:
 
 rule run_pggb:
     input:
-        fa  = str(RUN_DIR / "PGGB" / "all.fa.gz"),
-        fai = str(RUN_DIR / "PGGB" / "all.fa.gz.fai"),
-        gzi = str(RUN_DIR / "PGGB" / "all.fa.gz.gzi"),
+        fa  = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz",
+        fai = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.fai",
+        gzi = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.gzi",
     output:
-        gfa = str(RUN_DIR / "PGGB" / "pangenome.gfa"),
-        log = str(RUN_DIR / "PGGB" / "pggb.log"),
+        gfa = OUTPUT_DIR + "/{run}/PGGB/pangenome.gfa",
+        log = OUTPUT_DIR + "/{run}/PGGB/pggb.log",
     params:
-        n      = lambda wc: config["pggb"].get("n_haplotypes") or len(SAMPLES),
+        n      = lambda wc: config["pggb"].get("n_haplotypes") or len(RUNS[wc.run]["samples"]),
         s      = config["pggb"].get("segment_length", 5000),   # longueur de segment
         p      = config["pggb"].get("percent_identity", 90),   # % identité minimum
-        outdir = str(RUN_DIR / "PGGB"),
+        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/PGGB",
     threads:
         config["pggb"].get("threads", 4)
     container:
