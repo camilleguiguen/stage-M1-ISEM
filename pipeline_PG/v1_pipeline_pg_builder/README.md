@@ -18,48 +18,10 @@ pipeline_v1/
     └── scripts/gfa_stats.py        ← stats + résumé global
 ```
 
-## Configuration (obligatoire)
-
-Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
-
-```yaml
-# Répertoire contenant les fichiers FASTA assemblés
-# Format des noms : <espece>_<chrom>_<commentaire>.fasta
-# Ex : pdestructans_1_run1.fasta → dossier result_pdestructans_chrom1_run1/
-input_dir: "data/"
-
-output_dir: "all_results"
-
-# Pour tester sur un sous-ensemble : N premiers isolats de chaque FASTA.
-n_first: 5   # null = tous les isolats
-
-# Isolat de référence (premier de la liste si null)
-reference: null
-
-# --- Sélection et paramétrage des constructeurs ---
-tools:
-  minigraph: true            # activer/désactiver Minigraph
-  pggb: false                # activer/désactiver PGGB
-  minigraph_cactus: false    # activer/désactiver Minigraph-Cactus
-  visualisation: false       # true = génère et gère les images Bandage
-
-minigraph:
-  min_sv_len: 50
-  threads: 4
-
-pggb:
-  n_haplotypes: null   # null = auto (nombre d'isolats)
-  segment_length: 5000
-  percent_identity: 90
-  threads: 4
-
-minigraph_cactus:
-  threads: 4
-```
 
 ## Lancement
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
-  - Avoir édité le **fichier de configuration** (voir ci dessus).
+  - Avoir édité le **fichier de configuration** (voir ci dessous).
   - Avoir un **environnement où Conda/Mamba** est installé (pour que le SLURM installe Snakemake). 
   - Si le SLURM echoue à cause de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
@@ -104,6 +66,47 @@ snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --sna
 
 > **Attention** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
 > Si les données sont dans `/scratch`, ajouter `--singularity-args "--bind /scratch"`.
+
+## Configuration (obligatoire)
+
+Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
+Depuis v1_pipeline_pg_builder faire `nano config/config.yaml` puis éditer.
+
+
+```yaml
+# Répertoire contenant les fichiers FASTA assemblés
+# Format des noms : <espece>_<chrom>_<commentaire>.fasta
+# Ex : pdestructans_1_run1.fasta → dossier result_pdestructans_chrom1_run1/
+input_dir: "data/"
+
+output_dir: "all_results"
+
+# Pour tester sur un sous-ensemble : N premiers isolats de chaque FASTA.
+n_first: 5   # null = tous les isolats
+
+# Isolat de référence (premier de la liste si null)
+reference: null
+
+# --- Sélection et paramétrage des constructeurs ---
+tools:
+  minigraph: true            # activer/désactiver Minigraph
+  pggb: false                # activer/désactiver PGGB
+  minigraph_cactus: false    # activer/désactiver Minigraph-Cactus
+  visualisation: false       # true = génère et gère les images Bandage
+
+minigraph:
+  min_sv_len: 50
+  threads: 4
+
+pggb:
+  n_haplotypes: null   # null = auto (nombre d'isolats)
+  segment_length: 5000
+  percent_identity: 90
+  threads: 4
+
+minigraph_cactus:
+  threads: 4
+```
 
 #### Images utilisées (Apptainer)
 
@@ -181,7 +184,7 @@ all_results/
     └── ...
 ```
 
-## Une fois que ça marche…
+## Perspectives d'amélioration pour ce pipeline
 
 Étapes suivantes possibles :
 1. Voir s'il y a d'autres params intéréssants / outils
