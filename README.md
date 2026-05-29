@@ -44,7 +44,8 @@ tree
   - Avoir édité le **fichier de configuration** (voir ci dessous [Configuration](#configuration-obligatoire)).
   - Avoir un **environnement où Apptainer** est installé (vérifier avec `apptainer --version`). 
     > **Attention** : si vous êtes sur le cluster Genouest, soyez sûr d'être sur un noeud avec AVX2 (Advanced Vector Extensions). Vérifier : `grep -o 'avx2' /proc/cpuinfo | head -1`, si rien ne s'affiche, relancer la connection mais forcer le noeud avec : `srun --constraint avx2 --pty bash`.
-    > **Si le SLURM échoue** à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
+
+    > **Si le SLURM échoue** à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou via `pip install snakemake`.
 
 ### Via le script SLURM (recommandé sur cluster)
 
