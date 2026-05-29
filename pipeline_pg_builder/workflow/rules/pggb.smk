@@ -17,9 +17,9 @@ rule prepare_pansn_multifasta:
     input:
         multifasta = lambda wc: RUNS[wc.run]["fasta"],
     output:
-        fa  = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz",
-        fai = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.fai",
-        gzi = OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.gzi",
+        fa  = temp(OUTPUT_DIR + "/{run}/PGGB/all.fa.gz"),
+        fai = temp(OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.fai"),
+        gzi = temp(OUTPUT_DIR + "/{run}/PGGB/all.fa.gz.gzi"),
     params:
         samples = lambda wc: RUNS[wc.run]["samples"],
     container:

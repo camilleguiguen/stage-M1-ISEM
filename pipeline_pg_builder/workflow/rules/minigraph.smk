@@ -14,7 +14,7 @@ rule extract_isolate:
     input:
         multifasta = lambda wc: RUNS[wc.run]["fasta"],
     output:
-        fa = OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
+        fa = temp(OUTPUT_DIR + "/{run}/per_sample/{sample}.fa"),
     container:
         "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
     shell:

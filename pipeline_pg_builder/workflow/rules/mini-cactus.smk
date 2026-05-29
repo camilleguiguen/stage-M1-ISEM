@@ -84,4 +84,7 @@ rule run_minigraph_cactus:
             exit 1
         fi
         [ "$final" != "{output.gfa}" ] && mv "$final" {output.gfa}
+
+        # Supprime les dossiers intermédiaires volumineux générés par cactus/Toil
+        rm -rf {params.jobstore} {params.outdir}/chrom-alignments {params.outdir}/chrom-subproblems
         """
