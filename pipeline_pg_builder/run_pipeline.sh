@@ -3,11 +3,11 @@
 # run_pipeline.sh — Soumission SLURM du pipeline de construction de pangénome
 # =============================================================================
 # Usage :
-#   sbatch run_pipeline.sh                  (depuis /scratch/.../v1_pipeline_pg_builder/)
+#   sbatch run_pipeline.sh                  (depuis /scratch/.../pipeline_pg_builder/)
 #   bash   run_pipeline.sh                  (en interactif, sans SLURM)
 #
 # Pré-requis :
-#   - Être dans le répertoire v1_pipeline_pg_builder/
+#   - Être dans le répertoire pipeline_pg_builder/
 #   - Avoir configuré config/config.yaml
 # =============================================================================
 

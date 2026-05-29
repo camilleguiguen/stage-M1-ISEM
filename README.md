@@ -1,11 +1,11 @@
-# PanQueSt – Pipeline v1 (Minigraph + PGGB + Minigraph-cactus)
+# PanQueSt – Pangenome builder pipeline
 
-Prend un **multi-FASTA** en entrée et produit un ou plusieurs **graphes de pangénome** + un résumé global.
+Prend un répertoire de un ou plusieurs **multi-FASTA** en entrée et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus and PGGB.
 
 ## Structure
 
 ```
-pipeline_v1/
+pipeline_pg_builder/
 ├── config/config.yaml              ← fichier de config à éditer
 └── workflow/
     ├── Snakefile                   ← config, variables globales, rule all, includes
@@ -22,7 +22,7 @@ pipeline_v1/
 ## Lancement
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
   - Avoir édité le **fichier de configuration** (voir ci dessous).
-  - Avoir un **environnement où Conda/Mamba** est installé (pour que le SLURM installe Snakemake). 
+  - Avoir un **environnement où Apptainer** est installé (pour que le SLURM installe Snakemake). 
   - Si le SLURM echoue à cause de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
 ### Via le script SLURM (recommandé sur cluster)
@@ -36,7 +36,7 @@ Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est in
 #     output_dir: "/scratch/<user>/all_results"
 
 # Lancer depuis /home où se trouve le code
-cd ~/path/to/v1_pipeline_pg_builder/
+cd ~/path/to/pipeline_pg_builder/
 
 sbatch run_pipeline.sh # Soumettre le job SLURM
 
@@ -52,7 +52,7 @@ tail -f logs/pg_builder_<JOBID>.log # Consulter les logs en temps réel
 
 ```bash
 # Aller dans le bon répertoire
-cd pipeline_PG/v1_pipeline_pg_builder/
+cd pipeline_PG/pipeline_pg_builder/
 
 # Dry-run
 snakemake --use-singularity -n --snakefile workflow/Snakefile
@@ -70,7 +70,7 @@ snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --sna
 ## Configuration (obligatoire)
 
 Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
-Depuis v1_pipeline_pg_builder faire `nano config/config.yaml` puis éditer.
+Depuis le répertoire pipeline_pg_builder faire `nano config/config.yaml` puis éditer.
 
 
 ```yaml
@@ -143,7 +143,7 @@ Activée avec `tools.visualisation: true` dans `config.yaml`. Nécessite `--use-
 
 | Cas | Ce qui est généré |
 |-----|-------------------|
-| Minigraph seul | `Minigraph/bandage_MG.png` |
+| Minigraph seul | `MinUne fois que ça marche…igraph/bandage_MG.png` |
 | PGGB seul | `PGGB/visu_images/bandage.png` + PNGs générés par PGGB déplacés dans `visu_images/` |
 | Minigraph-Cactus seul | `MinigraphCactus/bandage_MC.png` |
 | Plusieurs outils | Combinaison des cas ci-dessus |
@@ -156,7 +156,7 @@ Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inv
 
 ```
 data/
-├── pdestructans_1_run1.fasta    ← un fichier FASTA = un run
+├── pdestructans_1_run1.fasta    ← un fichier FASTA = une run
 └── pdestructans_2_run1.fasta
 
 all_results/
@@ -182,6 +182,94 @@ all_results/
 │   └── runs_summary_update.txt
 └── result_pdestructans_chrom2_run1/       ← second run traité en parallèle
     └── ...
+```
+
+## Tester le pipeline avec le fichier de test fourni
+
+Le fichier `test_data/generated_3samples_testfile.fasta` contient 3 séquences synthétiques de ~30 kb. `sampleA` (30 kb) sert de référence et est composé de deux blocs de 15 kb ; `sampleB` (35 kb) contient une insertion de 5 kb au milieu de la référence ; `sampleC` (29 kb) combine une insertion de 2 kb et une délétion de 3 kb.
+
+Le but est de vérifier que le **dry-run** passe sans erreur pour tous les outils et toutes les fonctionnalités.
+
+**1. Préparer le répertoire de données**
+
+Le fichier doit être nommé au format `<espece>_<chrom>_<commentaire>.fasta` et placé dans `data/` :
+
+```bash
+cd pipeline_pg_builder/
+mkdir -p data
+mkdir -p data/test
+cp ../test_data/generated_3samples_testfile.fasta  data/test
+```
+
+**2. Configurer `config/config.yaml` — tout activer**
+
+```yaml
+input_dir: "data/test"
+output_dir: "all_results"
+n_first: null      # 3 isolats seulement dans ce fichier de test
+reference: null    # sampleA utilisé comme référence
+
+tools:
+  minigraph: true
+  pggb: true
+  minigraph_cactus: true
+  visualisation: true   # teste aussi la génération des images Bandage
+```
+
+**3. Dry-run — aucune exécution réelle, vérifie que toutes les règles se résolvent**
+
+```bash
+snakemake --use-singularity -n --snakefile workflow/Snakefile
+```
+
+Le dry-run doit lister les jobs sans erreur. Exemple de sortie attendue :
+
+```
+Job counts:
+  count  jobs
+  3      extract_isolate         (1 par isolat)
+  1      run_minigraph
+  1      prepare_pansn_multifasta
+  1      run_pggb
+  1      prepare_seqfile
+  1      run_minigraph_cactus
+  1      build_summary
+  1      bandage_minigraph
+  1      bandage_mc
+  1      pggb_visu
+```
+
+Si une règle manque ou si Snakemake signale une erreur de résolution de wildcard ou de fichier manquant, c'est ici que ça se verra — sans avoir lancé de calcul coûteux.
+
+**4. Vrai run après validation du dry-run (non obligatoire, le dry run peut suffire)**
+
+```bash
+snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
+```
+
+**5. Résultat attendu**
+
+```
+all_results/
+└── result_pdestructans_chrom1_test/
+    ├── per_sample/
+    │   ├── sampleA.fa
+    │   ├── sampleB.fa
+    │   └── sampleC.fa
+    ├── Minigraph/
+    │   ├── pangenome_MG.gfa
+    │   ├── minigraph.log
+    │   └── bandage_MG.png
+    ├── PGGB/
+    │   ├── pangenome.gfa
+    │   ├── pggb.log
+    │   └── visu_images/bandage.png
+    ├── MinigraphCactus/
+    │   ├── seqfile.tsv
+    │   ├── pangenome_MC.gfa
+    │   ├── minigraph_cactus.log
+    │   └── bandage_MC.png
+    └── runs_summary_update.txt
 ```
 
 ## Perspectives d'amélioration pour ce pipeline

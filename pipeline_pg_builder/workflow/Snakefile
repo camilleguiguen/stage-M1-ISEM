@@ -1,5 +1,5 @@
 # =============================================================================
-# PanQueSt - Pipeline v1 : répertoire de FASTAs -> graphes de pangénome
+# PanQueSt - Pipeline : répertoire de FASTAs -> graphes de pangénome
 # =============================================================================
 #
 # ENTRÉE  : un répertoire de fichiers FASTA (1 fichier = 1 run = 1 chromosome)
@@ -135,7 +135,7 @@ onsuccess:
     print("  Pour rapatrier les résultats en local :")
     print(f"  scp -r {user}@<login_node>:{out_dir} .")
     print("  Pour l'instant pour camille (changer noms fic):")
-    print (f"    scp -r cguiguen@genossh.genouest.org:/scratch/cguiguen/v1_pipeline_pg_builder/{out_dir}/ ~/Documents/data_from_cluster/")
+    print (f"    scp -r cguiguen@genossh.genouest.org:/scratch/cguiguen/pipeline_pg_builder/{out_dir}/ ~/Documents/data_from_cluster/")
     print("=" * 60 + "\n")
 
 # --- 5. Cible finale --------------------------------------------------------
