@@ -73,12 +73,15 @@ rule run_minigraph_cactus:
             --outDir {params.outdir} \
             --outName pangenome_MGC \
             --reference {params.reference} \
-            --maxCores {threads} \
+            --maxCores $(( {threads} > 4 ? {threads} : 4 )) \
             --gfa \
             > {output.log} 2>&1
 
-        # Le GFA final est nommé pangenome_MGC.gfa dans outDir
-        # → on vérifie qu'il est bien là (cactus peut varier le nom exact)
-        final=$(ls {params.outdir}/pangenome_MGC*.gfa 2>/dev/null | head -1)
-        [ -n "$final" ] && [ "$final" != "{output.gfa}" ] && mv "$final" {output.gfa}
+        # Cherche le GFA produit par cactus (le nom exact peut varier) et le renomme
+        final=$(find {params.outdir} -maxdepth 1 -name "*.gfa" 2>/dev/null | head -1)
+        if [ -z "$final" ]; then
+            echo "ERREUR : aucun GFA produit par cactus dans {params.outdir}" >&2
+            exit 1
+        fi
+        [ "$final" != "{output.gfa}" ] && mv "$final" {output.gfa}
         """
