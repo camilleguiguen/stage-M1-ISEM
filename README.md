@@ -37,12 +37,14 @@ pipeline_pg_builder/
 Clonner le pipeline dans un répertoire dédié :
 ```bash
 git clone https://github.com/camilleguiguen/stage-M1-ISEM.git
+tree
 ```
 
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
   - Avoir édité le **fichier de configuration** (voir ci dessous [Configuration](#configuration-obligatoire)).
   - Avoir un **environnement où Apptainer** est installé (vérifier avec `apptainer --version`). 
-  - Si le SLURM echoue à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
+    > **Attention** : si vous êtes sur le cluster Genouest, soyez sûr d'être sur un noeud avec AVX2 (Advanced Vector Extensions). Vérifier : `grep -o 'avx2' /proc/cpuinfo | head -1`, si rien ne s'affiche, relancer la connection mais forcer le noeud avec : `srun --constraint avx2 --pty bash`.
+    > **Si le SLURM échoue** à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
 ### Via le script SLURM (recommandé sur cluster)
 
@@ -55,9 +57,9 @@ Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est in
 #     output_dir: "/scratch/<user>/all_results"
 
 # Lancer depuis /home où se trouve le code
-cd ~/path/to/pipeline_pg_builder/
+cd ~/path/to/stage-M1-ISEM/pipeline_pg_builder/
 
-sbatch run_pipeline.sh # Soumettre le job SLURM
+sbatch run_pipeline.sh # LANCEMENT du job et donc du pipeline
 
 squeue -u $USER # Surveiller le job
 tail -f logs/pg_builder_<JOBID>.log # Consulter les logs en temps réel
