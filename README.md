@@ -34,20 +34,19 @@ pipeline_pg_builder/
 
 ## Lancement
 
-Clonner le pipeline :
+Clonner le pipeline dans un répertoire dédié :
 ```bash
-cd  /votre/repertoire/
 git clone https://github.com/camilleguiguen/stage-M1-ISEM.git
 ```
 
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
-  - Avoir édité le **fichier de configuration** (voir ci dessous).
-  - Avoir un **environnement où Apptainer** est installé (pour que le SLURM installe Snakemake). 
-  - Si le SLURM echoue à cause de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
+  - Avoir édité le **fichier de configuration** (voir ci dessous [Configuration](#configuration-obligatoire)).
+  - Avoir un **environnement où Apptainer** est installé (vérifier avec `apptainer --version`). 
+  - Si le SLURM echoue à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou simplement via `pip install snakemake`.
 
 ### Via le script SLURM (recommandé sur cluster)
 
-Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est installé et le télécharge si besoin, puis lance le pipeline.
+Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est installé et le télécharge si besoin, puis **lance le pipeline**.
 
 ```bash
 # Le code reste dans /home (git pull ici), les données/résultats vont dans /scratch.
