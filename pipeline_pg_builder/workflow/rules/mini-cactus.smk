@@ -63,6 +63,8 @@ rule run_minigraph_cactus:
     shell:
         r"""
         mkdir -p {params.outdir}
+        # Nettoie le jobstore d'une éventuelle run précédente — sinon Toil refuse de démarrer
+        rm -rf {params.jobstore}
 
         # cactus-pangenome produit un GFA dans outdir/
         # --maxCores limite le nombre de cœurs utilisés
