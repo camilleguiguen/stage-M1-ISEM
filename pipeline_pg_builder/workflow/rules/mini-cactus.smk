@@ -77,13 +77,14 @@ rule run_minigraph_cactus:
             --gfa \
             > {output.log} 2>&1
 
-        # Cherche le GFA produit par cactus (le nom exact peut varier) et le renomme
-        final=$(find {params.outdir} -maxdepth 1 -name "*.gfa" 2>/dev/null | head -1)
-        if [ -z "$final" ]; then
+        # Cactus produit un GFA compressé (*.gfa.gz, hors *.sv.gfa.gz)
+        # → on le décompresse vers le nom standard attendu par Snakemake
+        final_gz=$(find {params.outdir} -maxdepth 1 -name "*.gfa.gz" ! -name "*.sv.gfa.gz" 2>/dev/null | head -1)
+        if [ -z "$final_gz" ]; then
             echo "ERREUR : aucun GFA produit par cactus dans {params.outdir}" >&2
             exit 1
         fi
-        [ "$final" != "{output.gfa}" ] && mv "$final" {output.gfa}
+        gunzip -c "$final_gz" > {output.gfa}
 
         # Supprime les dossiers intermédiaires volumineux générés par cactus/Toil
         rm -rf {params.jobstore} {params.outdir}/chrom-alignments {params.outdir}/chrom-subproblems
