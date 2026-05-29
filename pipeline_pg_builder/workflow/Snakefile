@@ -81,9 +81,9 @@ def active_tools(run_dir):
     if config["tools"].get("minigraph_cactus", False):
         tools.append({
             "label":   "MinigraphCactus",
-            "gfa":     str(run_dir / "MinigraphCactus" / "pangenome_MC.gfa"),
+            "gfa":     str(run_dir / "MinigraphCactus" / "pangenome_MGC.gfa"),
             "log":     str(run_dir / "MinigraphCactus" / "minigraph_cactus.log"),
-            "bandage": str(run_dir / "MinigraphCactus" / "bandage_MC.png"),
+            "bandage": str(run_dir / "MinigraphCactus" / "bandage_MGC.png"),
         })
     return tools
 

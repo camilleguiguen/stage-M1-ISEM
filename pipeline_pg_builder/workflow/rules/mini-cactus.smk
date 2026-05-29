@@ -50,7 +50,7 @@ rule run_minigraph_cactus:
     input:
         seqfile = OUTPUT_DIR + "/{run}/MinigraphCactus/seqfile.tsv",
     output:
-        gfa = OUTPUT_DIR + "/{run}/MinigraphCactus/pangenome_MC.gfa",
+        gfa = OUTPUT_DIR + "/{run}/MinigraphCactus/pangenome_MGC.gfa",
         log = OUTPUT_DIR + "/{run}/MinigraphCactus/minigraph_cactus.log",
     params:
         outdir    = lambda wc: OUTPUT_DIR + f"/{wc.run}/MinigraphCactus",
@@ -69,14 +69,14 @@ rule run_minigraph_cactus:
         # --reference désigne l'isolat de référence (doit correspondre à la 1re ligne du seqfile)
         cactus-pangenome {params.jobstore} {input.seqfile} \
             --outDir {params.outdir} \
-            --outName pangenome_MC \
+            --outName pangenome_MGC \
             --reference {params.reference} \
             --maxCores {threads} \
             --gfa \
             > {output.log} 2>&1
 
-        # Le GFA final est nommé pangenome_MC.gfa dans outDir
+        # Le GFA final est nommé pangenome_MGC.gfa dans outDir
         # → on vérifie qu'il est bien là (cactus peut varier le nom exact)
-        final=$(ls {params.outdir}/pangenome_MC*.gfa 2>/dev/null | head -1)
+        final=$(ls {params.outdir}/pangenome_MGC*.gfa 2>/dev/null | head -1)
         [ -n "$final" ] && [ "$final" != "{output.gfa}" ] && mv "$final" {output.gfa}
         """

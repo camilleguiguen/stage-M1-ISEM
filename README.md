@@ -1,6 +1,6 @@
 # PanQueSt – Pangenome builder pipeline
 
-Prend un répertoire de un ou plusieurs **multi-FASTA** en entrée et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus and PGGB.
+Prend un répertoire de un ou plusieurs **multi-FASTA** assemblés en entrée et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus and PGGB.
 
 ## Structure
 
@@ -10,11 +10,11 @@ pipeline_pg_builder/
 └── workflow/
     ├── Snakefile                   ← config, variables globales, rule all, includes
     ├── rules/
-    │   ├── minigraph.smk           ← extract_isolate + run_minigraph
-    │   ├── pggb.smk                ← prepare_pansn_multifasta + run_pggb
-    │   ├── mini-cactus             ← prepare_seqfile + run_minigraph_cactus
+    │   ├── minigraph.smk           ← rules pour minigraph
+    │   ├── pggb.smk                ← rules pour PGGB
+    │   ├── mini-cactus             ← rules pour minigraph-cactus
     │   ├── report.smk              ← build_summary
-    │   └── visu.smk                ← bandage_minigraph + bandage_mc + pggb_visu
+    │   └── visu.smk                ← bandage_minigraph + bandage_mgc + pggb_visu
     └── scripts/gfa_stats.py        ← stats + résumé global
 ```
 
@@ -130,7 +130,7 @@ minigraph_cactus:
 - **`run_minigraph_cactus`** — construit le graphe de pangénome avec cactus-pangenome
 - **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
 - **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualisation: true)*
-- **`bandage_mc`** — génère une image PNG du graphe Minigraph-Cactus via Bandage *(si visualisation: true)*
+- **`bandage_mgc`** — génère une image PNG du graphe Minigraph-Cactus via Bandage *(si visualisation: true)*
 - **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualisation: true)*
 
 
@@ -145,7 +145,7 @@ Activée avec `tools.visualisation: true` dans `config.yaml`. Nécessite `--use-
 |-----|-------------------|
 | Minigraph seul | `MinUne fois que ça marche…igraph/bandage_MG.png` |
 | PGGB seul | `PGGB/visu_images/bandage.png` + PNGs générés par PGGB déplacés dans `visu_images/` |
-| Minigraph-Cactus seul | `MinigraphCactus/bandage_MC.png` |
+| Minigraph-Cactus seul | `MinigraphCactus/bandage_MGC.png` |
 | Plusieurs outils | Combinaison des cas ci-dessus |
 
 Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inversions, positions…) sont déplacés dans `PGGB/visu_images/` en même temps que l'image Bandage.
@@ -176,9 +176,9 @@ all_results/
 │   │       └── *.png                      (visuels odgi générés par PGGB)
 │   ├── MinigraphCactus/                   (si tools.minigraph_cactus: true)
 │   │   ├── seqfile.tsv
-│   │   ├── pangenome_MC.gfa
+│   │   ├── pangenome_MGC.gfa
 │   │   ├── minigraph_cactus.log
-│   │   └── bandage_MC.png                 (si tools.visualisation: true)
+│   │   └── bandage_MGC.png                 (si tools.visualisation: true)
 │   └── runs_summary_update.txt
 └── result_pdestructans_chrom2_run1/       ← second run traité en parallèle
     └── ...
@@ -235,7 +235,7 @@ Job counts:
   1      run_minigraph_cactus
   1      build_summary
   1      bandage_minigraph
-  1      bandage_mc
+  1      bandage_mgc
   1      pggb_visu
 ```
 
@@ -266,9 +266,9 @@ all_results/
     │   └── visu_images/bandage.png
     ├── MinigraphCactus/
     │   ├── seqfile.tsv
-    │   ├── pangenome_MC.gfa
+    │   ├── pangenome_MGC.gfa
     │   ├── minigraph_cactus.log
-    │   └── bandage_MC.png
+    │   └── bandage_MGC.png
     └── runs_summary_update.txt
 ```
 
