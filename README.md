@@ -1,6 +1,19 @@
 # PanQueSt – Pangenome builder pipeline
 
-Prend un répertoire de un ou plusieurs **multi-FASTA** assemblés en entrée et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus and PGGB.
+Prend un répertoire de un ou plusieurs **multi-FASTA assemblés** en entrée et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus et PGGB.
+
+## Sommaire
+
+- [Structure](#structure)
+- [Lancement](#lancement)
+  - [Via le script SLURM](#via-le-script-slurm-recommandé-sur-cluster)
+  - [Mode manuel](#mode-manuel-sans-slurm)
+- [Configuration](#configuration-obligatoire)
+- [Règles du pipeline](#règles-du-pipeline)
+- [Visualisation](#visualisation-dimages-png-du-pangénome)
+- [Sortie](#sortie)
+- [Tester le pipeline](#tester-le-pipeline-avec-le-fichier-de-test-fourni)
+- [Perspectives d'amélioration](#perspectives-damélioration-pour-ce-pipeline)
 
 ## Structure
 
@@ -20,6 +33,13 @@ pipeline_pg_builder/
 
 
 ## Lancement
+
+Clonner le pipeline :
+```bash
+cd  /votre/repertoire/
+git clone https://github.com/camilleguiguen/stage-M1-ISEM.git
+```
+
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
   - Avoir édité le **fichier de configuration** (voir ci dessous).
   - Avoir un **environnement où Apptainer** est installé (pour que le SLURM installe Snakemake). 
