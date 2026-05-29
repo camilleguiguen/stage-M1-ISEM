@@ -116,7 +116,7 @@ onstart:
     tools_on = [k for k, v in config["tools"].items() if v]
     print("=" * 60)
     print(f"  Dossier d'entrée : {config['input_dir']}")
-    print(f"  Runs détectés    : {len(RUNS)}")
+    print(f"  Runs/fastas détectés    : {len(RUNS)}")
     for run_name, run in RUNS.items():
         print(f"    [{run_name}]")
         print(f"      FASTA     : {run['fasta']}")
