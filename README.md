@@ -1,4 +1,4 @@
-# PanQueSt – Pangenome builder pipeline
+# Pangenome builder pipeline - Projet ANR PanQueSt 
 
 Prend **en entrée un répertoire** de un ou plusieurs **multi-FASTA assemblés**  et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus et/ou PGGB.
 
@@ -12,7 +12,7 @@ Prend **en entrée un répertoire** de un ou plusieurs **multi-FASTA assemblés*
 - [Sortie](#sortie)
 - [Tester le pipeline](#tester-le-pipeline-avec-le-fichier-de-test-fourni)
 - [Images Apptainer et rules](#images-apptainer-et-règles-du-pipeline)
-- [Visualisation graphique](#visualisation-dimages-png-du-pangénome)
+- [Visualisation graphique](#option-de-visualisation-dimages-png-du-pangénome)
 - [Perspectives d'amélioration](#perspectives-damélioration-pour-ce-pipeline)
 
 ## Structure
@@ -20,6 +20,7 @@ Prend **en entrée un répertoire** de un ou plusieurs **multi-FASTA assemblés*
 ```
 pipeline_pg_builder/
 ├── config/config.yaml              ← fichier de config à éditer
+└── input_data/
 └── workflow/
     ├── Snakefile                   ← config, variables globales, rule all, includes
     ├── rules/
@@ -266,7 +267,7 @@ all_results/
 > **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules ci-dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
 
 
-## Règles (rules) Snakemake
+### Règles (rules) Snakemake
 
 - **`extract_isolate`** — découpe le multi-FASTA d'entrée en un fichier par isolat (nécessaire pour Minigraph et Minigraph-Cactus)
 - **`prepare_pansn_multifasta`** — convertit directement le multi-FASTA au format PanSN bgzippé + indexé (nécessaire pour PGGB)
