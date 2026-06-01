@@ -9,10 +9,10 @@ Prend **en entrée un répertoire** de un ou plusieurs **multi-FASTA assemblés*
   - [Via le script SLURM](#via-le-script-slurm-recommandé-sur-cluster)
   - [Mode manuel](#mode-manuel-sans-slurm)
 - [Configuration](#configuration-obligatoire)
-- [Règles du pipeline](#règles-du-pipeline)
-- [Visualisation](#visualisation-dimages-png-du-pangénome)
 - [Sortie](#sortie)
 - [Tester le pipeline](#tester-le-pipeline-avec-le-fichier-de-test-fourni)
+- [Images Apptainer et rules](#images-apptainer-et-règles-du-pipeline)
+- [Visualisation graphique](#visualisation-dimages-png-du-pangénome)
 - [Perspectives d'amélioration](#perspectives-damélioration-pour-ce-pipeline)
 
 ## Structure
@@ -90,6 +90,7 @@ snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --sna
 > **Remarque** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
 > Si les données sont dans `/scratch`, ajouter `--singularity-args "--bind /scratch"`.
 
+
 ## Configuration (obligatoire)
 
 Le fichier `config/config.yaml` est le seul fichier à éditer pour construire un pangénome :
@@ -130,50 +131,6 @@ pggb:
 minigraph_cactus:
   threads: 4
 ```
-
-#### Images utilisées (Apptainer)
-
-| Règle | Image BioContainers |
-|-------|---------------------|
-| `extract_isolate` | `quay.io/biocontainers/samtools:1.21--h50ea8bc_0` |
-| `run_minigraph` | `quay.io/biocontainers/minigraph:0.21--h577a1d6_3` |
-| `prepare_pansn_multifasta` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
-| `run_pggb` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
-| `prepare_seqfile` | *(règle Python pure, pas de conteneur)* |
-| `run_minigraph_cactus` | `quay.io/comparative-genomics-toolkit/cactus:v3.2.1` |
-> **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules ci-dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
-
-## Règles du pipeline
-
-- **`extract_isolate`** — découpe le multi-FASTA d'entrée en un fichier par isolat (nécessaire pour Minigraph et Minigraph-Cactus)
-- **`prepare_pansn_multifasta`** — convertit directement le multi-FASTA au format PanSN bgzippé + indexé (nécessaire pour PGGB)
-- **`prepare_seqfile`** — génère le fichier TSV (seqfile) listant les isolats avec la référence en 1re ligne (nécessaire pour Minigraph-Cactus)
-- **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
-- **`run_pggb`** — construit le graphe de pangénome avec PGGB
-- **`run_minigraph_cactus`** — construit le graphe de pangénome avec cactus-pangenome
-- **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
-- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualisation: true)*
-- **`bandage_mgc`** — génère une image PNG du graphe Minigraph-Cactus via Bandage *(si visualisation: true)*
-- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualisation: true)*
-
-
-**Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
-Seules les branches activées dans `tools:` sont exécutées.
-
-## Visualisation d'images png du pangénome
-
-Activée avec `tools.visualisation: true` dans `config.yaml`.
-
-| Cas | Ce qui est généré |
-|-----|-------------------|
-| Minigraph seul | `MinUne fois que ça marche…igraph/bandage_MG.png` |
-| PGGB seul | `PGGB/visu_images/bandage.png` + PNGs générés par PGGB déplacés dans `visu_images/` |
-| Minigraph-Cactus seul | `MinigraphCactus/bandage_MGC.png` |
-| Plusieurs outils | Combinaison des cas ci-dessus |
-
-Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inversions, positions…) sont déplacés dans `PGGB/visu_images/` en même temps que l'image Bandage.
-
-> **Remarque Minigraph** : pas de visualisation `odgi` pour Minigraph car ses GFA ne contiennent pas de `Path` — Bandage uniquement.
 
 ## Sortie
 
@@ -219,15 +176,13 @@ Le fichier doit être nommé au format `<espece>_<chrom>_<commentaire>.fasta` et
 
 ```bash
 cd pipeline_pg_builder/
-mkdir -p data
-mkdir -p data/test
-cp ../test_data/generated_3samples_testfile.fasta  data/test
+cp ../test_data/generated_3samples_testfile.fasta  input_data/
 ```
 
 **2. Configurer `config/config.yaml` — tout activer**
 
 ```yaml
-input_dir: "data/test"
+input_dir: "input_data/"
 output_dir: "all_results"
 n_first: null      # 3 isolats seulement dans ce fichier de test
 reference: null    # sampleA utilisé comme référence
@@ -236,7 +191,7 @@ tools:
   minigraph: true
   pggb: true
   minigraph_cactus: true
-  visualisation: true   # teste aussi la génération des images Bandage
+  visualisation: true   # teste aussi la génération des images png Bandage et ODGI
 ```
 
 **3. Dry-run — aucune exécution réelle, vérifie que toutes les règles se résolvent**
@@ -295,9 +250,58 @@ all_results/
     └── runs_summary_update.txt
 ```
 
+
+## Images Apptainer et règles du pipeline
+
+#### Images utilisées (Apptainer)
+
+| Règle | Image BioContainers |
+|-------|---------------------|
+| `extract_isolate` | `quay.io/biocontainers/samtools:1.21--h50ea8bc_0` |
+| `run_minigraph` | `quay.io/biocontainers/minigraph:0.21--h577a1d6_3` |
+| `prepare_pansn_multifasta` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
+| `run_pggb` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
+| `prepare_seqfile` | *(règle Python pure, pas de conteneur)* |
+| `run_minigraph_cactus` | `quay.io/comparative-genomics-toolkit/cactus:v3.2.1` |
+> **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules ci-dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
+
+
+## Règles (rules) Snakemake
+
+- **`extract_isolate`** — découpe le multi-FASTA d'entrée en un fichier par isolat (nécessaire pour Minigraph et Minigraph-Cactus)
+- **`prepare_pansn_multifasta`** — convertit directement le multi-FASTA au format PanSN bgzippé + indexé (nécessaire pour PGGB)
+- **`prepare_seqfile`** — génère le fichier TSV (seqfile) listant les isolats avec la référence en 1re ligne (nécessaire pour Minigraph-Cactus)
+- **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
+- **`run_pggb`** — construit le graphe de pangénome avec PGGB
+- **`run_minigraph_cactus`** — construit le graphe de pangénome avec cactus-pangenome
+- **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
+- **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualisation: true)*
+- **`bandage_mgc`** — génère une image PNG du graphe Minigraph-Cactus via Bandage *(si visualisation: true)*
+- **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualisation: true)*
+
+
+**Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
+Seules les branches activées dans `tools:` sont exécutées.
+
+## Option de visualisation d'images png du pangénome
+
+Activée avec `tools.visualisation: true` dans `config.yaml`.
+
+| Cas | Ce qui est généré |
+|-----|-------------------|
+| Minigraph seul | `MinUne fois que ça marche…igraph/bandage_MG.png` |
+| PGGB seul | `PGGB/visu_images/bandage.png` + PNGs générés par PGGB déplacés dans `visu_images/` |
+| Minigraph-Cactus seul | `MinigraphCactus/bandage_MGC.png` |
+| Plusieurs outils | Combinaison des cas ci-dessus |
+
+Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inversions, positions…) sont déplacés dans `PGGB/visu_images/` en même temps que l'image Bandage.
+
+> **Remarque Minigraph** : pas de visualisation `odgi` pour Minigraph car ses GFA ne contiennent pas de `Path` — Bandage uniquement.
+
+
 ## Perspectives d'amélioration pour ce pipeline
 
 Étapes suivantes possibles :
 1. Voir s'il y a d'autres params intéréssants / outils
-5. ajout d'un formulaire pour remplir le fichier de config
-6. Ajouter règles SLURM pour tester sur grosses data !!
+2. Ajout d'un formulaire pour remplir le fichier de config
+3. Implémentation d'une commande de mise à jour des versions des outils. 
