@@ -133,9 +133,10 @@ onsuccess:
     print("\n" + "=" * 60)
     print("  Pipeline terminé !")
     print("  Pour rapatrier les résultats en local :")
-    print(f"  scp -r {user}@<login_node>:{out_dir} .")
-    print("  Pour l'instant pour camille (changer noms fic):")
-    print (f"    scp -r cguiguen@genossh.genouest.org:/scratch/cguiguen/pipeline_pg_builder/{out_dir}/ ~/Documents/data_from_cluster/")
+    print(f"  scp -r {user}@<login_node>:{out_dir}/**/*.png rep/local/cible")
+    print("  Pour l'instant pour camille :")
+    for run_name in RUNS:
+        print(f"    scp -r cguiguen@genossh.genouest.org:{out_dir}/{run_name}/**/*.png ~/Documents/data_from_cluster/{run_name}/")
     print("=" * 60 + "\n")
 
 # --- 5. Cible finale --------------------------------------------------------
