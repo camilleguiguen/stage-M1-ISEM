@@ -58,7 +58,6 @@ Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est in
 #     input:      "/scratch/<user>/data/mes_data.fasta"
 #     output_dir: "/scratch/<user>/all_results"
 
-# Lancer depuis /home où se trouve le code
 cd ~/path/to/stage-M1-ISEM/pipeline_pg_builder/
 
 bash dry_run_pipeline.sh # OPT : lance le dry run (simulation du lancement) 
@@ -102,7 +101,7 @@ Depuis le répertoire pipeline_pg_builder faire `nano config/config.yaml` puis �
 # Répertoire contenant les fichiers FASTA assemblés
 # Format des noms : <espece>_<chrom>_<commentaire>.fasta
 # Ex : pdestructans_1_run1.fasta → dossier result_pdestructans_chrom1_run1/
-input_dir: "input_data/" # mettre votre data dans ce dossier ou indiquer un autre path. 
+input_dir: "input_data/" # mettre votre data dans ce dossier ou indiquer un autre path 
 
 output_dir: "all_results"
 
@@ -137,8 +136,8 @@ minigraph_cactus:
 
 ```
 data/
-├── pdestructans_1_run1.fasta    ← un fichier FASTA = une run
-└── pdestructans_2_run1.fasta
+├── pdestructans_chrom1_run1.fasta    ← un fichier FASTA = une run
+└── pdestructans_chrom2_run1.fasta
 
 all_results/
 ├── result_pdestructans_chrom1_run1/    ← nom dérivé automatiquement du fichier FASTA
@@ -198,7 +197,10 @@ tools:
 **3. Dry-run — aucune exécution réelle, vérifie que toutes les règles se résolvent**
 
 ```bash
-snakemake --use-singularity -n --snakefile workflow/Snakefile
+bash dry_run_pipeline.sh 
+
+#ou manuellement 
+snakemake --use-singularity -n --snakefile workflow/Snakefile 
 ```
 
 Le dry-run doit lister les jobs sans erreur. Exemple de sortie attendue :
@@ -223,6 +225,9 @@ Si une règle manque ou si Snakemake signale une erreur de résolution de wildca
 **4. Vrai run après validation du dry-run (non obligatoire, le dry run peut suffire)**
 
 ```bash
+sbatch run_pipeline.sh 
+
+#ou manuellement 
 snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
 ```
 
