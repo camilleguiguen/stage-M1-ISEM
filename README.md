@@ -166,7 +166,7 @@ all_results/
 
 ## Tester le pipeline avec le fichier de test fourni
 
-Le fichier `test_data/testfile_3simple_samples.fasta` contient 3 séquences synthétiques de ~30 kb. `sampleA` (30 kb) sert de référence et est composé de deux blocs de 15 kb ; `sampleB` (35 kb) contient une insertion de 5 kb au milieu de la référence ; `sampleC` (29 kb) combine une insertion de 2 kb et une délétion de 3 kb.
+Le fichier `test_data/testfile_3simple_samples.fasta` contient 3 séquences simulées de ~30 kb. `sampleA` (30 kb) sert de référence et est composé de deux blocs de 15 kb ; `sampleB` (35 kb) contient une insertion de 5 kb au milieu de la référence ; `sampleC` (29 kb) combine une insertion de 2 kb et une délétion de 3 kb.
 
 Le but est de vérifier que le **dry-run** passe sans erreur pour tous les outils et toutes les fonctionnalités.
 
