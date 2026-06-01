@@ -78,4 +78,10 @@ rule run_pggb:
         # → on le déplace vers le nom standard attendu par Snakemake
         final=$(ls {params.outdir}/*.smooth.final.gfa 2>/dev/null | head -1)
         [ -n "$final" ] && mv "$final" {output.gfa}
+
+        # Supprime les fichiers intermédiaires volumineux générés par PGGB
+        # (on garde : pangenome.gfa, pggb.log, et les *.png pour pggb_visu)
+        rm -f {params.outdir}/*.og {params.outdir}/*.lay {params.outdir}/*.lay.tsv \
+              {params.outdir}/*.paf {params.outdir}/*.params.yml \
+              {params.outdir}/*.fix.affixes.tsv.gz {params.outdir}/*.smooth.*.log
         """

@@ -49,6 +49,13 @@ rule prepare_seqfile:
 rule run_minigraph_cactus:
     input:
         seqfile = OUTPUT_DIR + "/{run}/MinigraphCactus/seqfile.tsv",
+        # Les FASTA sont référencés dans le seqfile — cactus en a besoin au moment
+        # de l'exécution. Les déclarer ici empêche Snakemake de les supprimer
+        # (temp()) avant que cactus ait terminé.
+        fastas = lambda wc: expand(
+            OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
+            run=wc.run, sample=RUNS[wc.run]["samples"],
+        ),
     output:
         gfa = OUTPUT_DIR + "/{run}/MinigraphCactus/pangenome_MGC.gfa",
         log = OUTPUT_DIR + "/{run}/MinigraphCactus/minigraph_cactus.log",
