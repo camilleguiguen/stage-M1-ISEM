@@ -4,7 +4,7 @@
 #
 # ENTRÉE  : un répertoire de fichiers FASTA (1 fichier = 1 run = 1 chromosome)
 #           Format des noms : <espece>_<chrom>_<commentaire>.fasta
-# SORTIE  : <output_dir>/result_<espece>_chrom<chrom>_<commentaire>/
+# SORTIE  : <output_dir>/result_<espece>_<chrom>_<commentaire>/
 #             ├── per_sample/<isolat>.fa
 #             ├── Minigraph/pangenome_MG.gfa  (si tools.minigraph: true)
 #             ├── PGGB/pangenome.gfa          (si tools.pggb: true)
@@ -27,7 +27,7 @@ def read_record_names(fasta_path):
     return names
 
 def fasta_to_run_name(fasta_path):
-    # "pdestructans_1_test.fasta" → "result_pdestructans_chrom1_test"
+    # "pdestructans_chrom1_test.fasta" → "result_pdestructans_chrom1_test"
     stem = Path(fasta_path).stem
     parts = stem.split("_", 2)  # max 3 parties : espece, chrom, commentaire
     if len(parts) < 3:
@@ -35,7 +35,7 @@ def fasta_to_run_name(fasta_path):
             f"Nom de fichier invalide : {Path(fasta_path).name}\n"
             f"Format attendu : <espece>_<chrom>_<commentaire>.fasta"
         )
-    return f"result_{parts[0]}_chrom{parts[1]}_{parts[2]}"
+    return f"result_{parts[0]}_{parts[1]}_{parts[2]}"
 
 # Découverte des fichiers FASTA dans le répertoire d'entrée
 input_dir = Path(config["input_dir"])
@@ -136,7 +136,7 @@ onsuccess:
     print(f"  scp -r {user}@<login_node>:{out_dir}/**/*.png rep/local/cible")
     print("  Pour l'instant pour camille :")
     for run_name in RUNS:
-        print(f"    scp -r cguiguen@genossh.genouest.org:{out_dir}/{run_name}/**/*.png ~/Documents/data_from_cluster/{run_name}/")
+        print(f"    scp cguiguen@genossh.genouest.org:{out_dir}/{run_name}/**/*.png ~/Documents/data_from_cluster/{run_name}/")
     print("=" * 60 + "\n")
 
 # --- 5. Cible finale --------------------------------------------------------
