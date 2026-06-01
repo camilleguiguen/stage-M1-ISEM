@@ -14,11 +14,11 @@ set -euo pipefail
 
 mkdir -p logs
 
+SNAKEMAKE_SIF="${HOME}/.apptainer/snakemake_stable.sif"
+
 if [ ! -f "$SNAKEMAKE_SIF" ]; then
     apptainer pull "$SNAKEMAKE_SIF" docker://snakemake/snakemake:stable
 fi
-
-SNAKEMAKE_SIF="${HOME}/.apptainer/snakemake_stable.sif"
 
 
 echo "============================================================"

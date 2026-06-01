@@ -60,6 +60,7 @@ Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est in
 # Lancer depuis /home où se trouve le code
 cd ~/path/to/stage-M1-ISEM/pipeline_pg_builder/
 
+bash dry_run_pipeline.sh # OPT : lance le dry run (simulation du lancement) 
 sbatch run_pipeline.sh # LANCEMENT du job et donc du pipeline
 
 squeue -u $USER # Surveiller le job
