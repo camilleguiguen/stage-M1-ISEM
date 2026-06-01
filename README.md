@@ -1,6 +1,6 @@
 # PanQueSt – Pangenome builder pipeline
 
-Prend un répertoire de un ou plusieurs **multi-FASTA assemblés** en entrée et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus et PGGB.
+Prend **en entrée un répertoire** de un ou plusieurs **multi-FASTA assemblés**  et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus et/ou PGGB.
 
 ## Sommaire
 
@@ -27,7 +27,7 @@ pipeline_pg_builder/
     │   ├── pggb.smk                ← rules pour PGGB
     │   ├── mini-cactus             ← rules pour minigraph-cactus
     │   ├── report.smk              ← build_summary
-    │   └── visu.smk                ← bandage_minigraph + bandage_mgc + pggb_visu
+    │   └── visu.smk                ← génère des images Bandage et ODGI
     └── scripts/gfa_stats.py        ← stats + résumé global
 ```
 
@@ -37,7 +37,7 @@ pipeline_pg_builder/
 Clonner le pipeline dans un répertoire dédié :
 ```bash
 git clone https://github.com/camilleguiguen/stage-M1-ISEM.git
-tree
+tree # pour voir l'arborescence 
 ```
 
 **Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
@@ -82,11 +82,11 @@ snakemake --use-singularity -n --snakefile workflow/Snakefile
 # Vrai run (en local ou sur un nœud interactif)
 snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
 
-# Si les données sont dans /scratch
+# Si les données sont ou vont dans /scratch
 snakemake --use-singularity --singularity-args "--bind /scratch" --cores 4 --snakefile workflow/Snakefile
 ```
 
-> **Attention** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
+> **Remarque** : par défaut, le conteneur ne voit que `/home` et `/tmp`.
 > Si les données sont dans `/scratch`, ajouter `--singularity-args "--bind /scratch"`.
 
 ## Configuration (obligatoire)
@@ -161,7 +161,7 @@ Seules les branches activées dans `tools:` sont exécutées.
 
 ## Visualisation d'images png du pangénome
 
-Activée avec `tools.visualisation: true` dans `config.yaml`. Nécessite `--use-singularity`.
+Activée avec `tools.visualisation: true` dans `config.yaml`.
 
 | Cas | Ce qui est généré |
 |-----|-------------------|
