@@ -32,7 +32,7 @@ minigraph:
 # Mettre true pour activer, false pour désactiver.
 tools:
   minigraph: true
-  pggb: true
+  pggb: false
   minigraph_cactus: false
   visualisation: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
 
