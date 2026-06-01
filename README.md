@@ -99,7 +99,7 @@ Depuis le répertoire pipeline_pg_builder faire `nano config/config.yaml` puis �
 # Répertoire contenant les fichiers FASTA assemblés
 # Format des noms : <espece>_<chrom>_<commentaire>.fasta
 # Ex : pdestructans_1_run1.fasta → dossier result_pdestructans_chrom1_run1/
-input_dir: "data/"
+input_dir: "input_data/" # mettre votre data dans ce dossier ou indiquer un autre path. 
 
 output_dir: "all_results"
 

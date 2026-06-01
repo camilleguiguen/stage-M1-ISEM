@@ -42,7 +42,9 @@ get_snakemake_sif() {
     echo "[OK] Image téléchargée : $SNAKEMAKE_SIF"
 }
 
-# --- Corps principal ----------------------------------------------------------
+
+
+
 set -euo pipefail
 
 mkdir -p logs
