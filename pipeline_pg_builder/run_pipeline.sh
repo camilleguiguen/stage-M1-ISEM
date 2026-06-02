@@ -22,6 +22,8 @@
 #SBATCH --mem=32G
 #SBATCH --time=4:00:00
 #SBATCH --partition=genouest    #normal, large... (taper 'sinfo' sur le cluster)
+#SBATCH --constraint=avx2
+
 
 # --- Image Snakemake (Apptainer) ---------------------------------------------
 # L'image inclut Singularity/Apptainer — nécessaire pour que Snakemake puisse
