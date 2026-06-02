@@ -6,6 +6,23 @@
 # =============================================================================
 
 OUTPUT_DIR = config["output_dir"]
+INPUT_DIR  = config["input_dir"].rstrip("/")
+
+# --- Indexation des FASTA d'entrée ------------------------------------------
+# Règle dédiée : crée le .fai UNE SEULE FOIS par fichier FASTA.
+# Évite la race condition quand plusieurs extract_isolate tournent en parallèle
+# et essaient tous de créer le .fai simultanément.
+
+rule index_fasta:
+    input:
+        INPUT_DIR + "/{fasta_stem}.fasta",
+    output:
+        INPUT_DIR + "/{fasta_stem}.fasta.fai",
+    container:
+        "docker://quay.io/biocontainers/samtools:1.21--h50ea8bc_0"
+    shell:
+        "samtools faidx {input}"
+
 
 # --- Étape 1 : extraire chaque isolat dans son propre FASTA -----------------
 # Cette règle tourne UNE FOIS PAR (run, isolat) (wildcards {run} et {sample}).
@@ -13,6 +30,7 @@ OUTPUT_DIR = config["output_dir"]
 rule extract_isolate:
     input:
         multifasta = lambda wc: RUNS[wc.run]["fasta"],
+        fai = lambda wc: RUNS[wc.run]["fasta"] + ".fai",  # garantit que l'index existe avant l'extraction
     output:
         fa = temp(OUTPUT_DIR + "/{run}/per_sample/{sample}.fa"),
     container:

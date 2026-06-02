@@ -147,8 +147,8 @@ onsuccess:
     runs_done  = list(RUNS.keys())
     date_str   = datetime.now().strftime("%Y-%m-%d %H:%M")
     entry = (f"Launch {idx} - {date_str} - "
-             f"duration: {h}h{m}min{s}s\n"
-             f"runs: {runs_done} - tools: {tools_run} - ")
+             f"duration: {h}h{m}min{s}s - "
+             f"runs: {runs_done} - tools: {tools_run}\n")
     with open(tracking, "a") as f:
         f.write(entry)
 
