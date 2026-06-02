@@ -4,7 +4,7 @@
 
 # Répertoire contenant les fichiers FASTA assemblés
 # Format des noms de fichiers : <espece>_<chrom>_<commentaire>.fasta
-# Ex : pdestructans_1_run1.fasta → dossier de sortie result_pdestructans_chrom1_run1/
+# Ex : pdestructans_chrom1_run1.fasta → dossier de sortie result_pdestructans_chrom1_run1/            
 input_dir: "data/"
 
 # Répertoire de sortie racine
