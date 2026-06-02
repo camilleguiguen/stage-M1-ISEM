@@ -9,6 +9,8 @@
 #SBATCH --mem=32G
 #SBATCH --time=4:00:00
 #SBATCH --partition=genouest
+#SBATCH --constraint=avx2
+
 
 set -euo pipefail
 
