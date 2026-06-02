@@ -165,6 +165,8 @@ all_results/
 └── pipeline_launches.log                  ← suivi de tous les lancements (date, durée, outils)
 ```
 
+Le fichier `pipeline_launches.log` contient l'historique des runs précédentes. Utile pour suivre ce qui à été apporté ou modifié dans le temps.
+
 ## Tester le pipeline avec le fichier de test fourni
 
 Le fichier `test_data/testfile_3simple_samples.fasta` contient 3 séquences simulées de ~30 kb. `sampleA` (30 kb) sert de référence et est composé de deux blocs de 15 kb ; `sampleB` (35 kb) contient une insertion de 5 kb au milieu de la référence ; `sampleC` (29 kb) combine une insertion de 2 kb et une délétion de 3 kb.
