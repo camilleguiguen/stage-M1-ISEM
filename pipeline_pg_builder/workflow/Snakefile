@@ -113,6 +113,9 @@ def summary_labels(wildcards):
 
 # --- 4. Affichage au démarrage ----------------------------------------------
 onstart:
+    import time as _time
+    global _pipeline_start
+    _pipeline_start = _time.time()
     tools_on = [k for k, v in config["tools"].items() if v]
     print("=" * 60)
     print(f"  Dossier d'entrée : {config['input_dir']}")
@@ -127,11 +130,30 @@ onstart:
 
 # --- Affichage rappel commandes scp pour les visu à la fin du pipeline -----------------------------------------
 onsuccess:
-    import os
+    import os, time as _time
+    from datetime import datetime
+    from pathlib import Path as _Path
+
+    elapsed = _time.time() - _pipeline_start
+    h, m, s  = int(elapsed // 3600), int((elapsed % 3600) // 60), int(elapsed % 60)
     user     = os.getenv("USER", "user")
     out_dir  = config["output_dir"]
+
+    # --- Fichier de suivi des lancements ------------------------------------
+    tracking = _Path(out_dir) / "pipeline_launches.log"
+    tracking.parent.mkdir(parents=True, exist_ok=True)
+    idx = sum(1 for l in open(tracking) if l.strip()) + 1 if tracking.exists() else 1
+    tools_run  = [k for k, v in config["tools"].items() if v]
+    runs_done  = list(RUNS.keys())
+    date_str   = datetime.now().strftime("%Y-%m-%d %H:%M")
+    entry = (f"Launch {idx} - {date_str} - "
+             f"duration: {h}h{m}min{s}s\n"
+             f"runs: {runs_done} - tools: {tools_run} - ")
+    with open(tracking, "a") as f:
+        f.write(entry)
+
     print("\n" + "=" * 60)
-    print("  Pipeline terminé !")
+    print(f"  Pipeline terminé en {h}h {m}min {s}s")
     print("  Pour rapatrier les résultats en local :")
     print(f"  scp -r {user}@<login_node>:{out_dir}/**/*.png rep/local/cible")
     print("  Pour l'instant pour camille :")
