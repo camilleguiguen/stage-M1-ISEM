@@ -8,6 +8,8 @@
 input_dir: "input_data/"
 
 # Répertoire de sortie racine
+# conseillé : "/scratch/<EspacePerso>/all_results"
+
 output_dir: "all_results"
 
 # --- Sélection des isolats --------------------------------------------------
