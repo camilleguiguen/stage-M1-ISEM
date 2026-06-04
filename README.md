@@ -55,7 +55,6 @@ Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est in
 ```bash
 # Le code reste dans /home (git pull ici), les données/résultats vont dans /scratch.
 # → Mettre des chemins absolus vers /scratch dans config/config.yaml :
-#     input:      "/scratch/<user>/data/mes_data.fasta"
 #     output_dir: "/scratch/<user>/all_results"
 
 cd ~/path/to/stage-M1-ISEM/pipeline_pg_builder/
