@@ -11,10 +11,27 @@
 #             └── runs_summary_update.txt
 # =============================================================================
 
+import shutil
 from pathlib import Path
 
 # --- 1. Chargement de la config ---------------------------------------------
 configfile: "config/config.yaml"
+
+# Rapatriement des FASTAs dans input_data/ si input_dir est externe 
+# samtools faidx écrit le .fai à côté du FASTA — si l'utilisateur pointe vers
+# un dossier externe en lecture seule, la création du .fai planterait.
+# Solution : on copie les FASTAs dans input_data/.
+_external_input = Path(config["input_dir"])
+_local_input    = Path("input_data")
+if _external_input.resolve() != _local_input.resolve():
+    _local_input.mkdir(exist_ok=True)
+    # pour chaque FASTA, si la copie locale n'existe pas déjà, la cp dans input_data/
+    for _fasta in _external_input.glob("*.fasta"):
+        _destpath = _local_input / _fasta.name
+        if not _destpath.exists():
+            shutil.copy2(str(_fasta), str(_destpath)) #copy2 inclus metadata
+            print(f"[setup] copié : {_fasta} → {_destpath}")
+    config["input_dir"] = "input_data/"
 
 # --- 2. Variables globales --------------------------------------------------
 
