@@ -17,7 +17,28 @@ from pathlib import Path
 # --- 1. Chargement de la config ---------------------------------------------
 configfile: "config/config.yaml"
 
-# Rapatriement des FASTAs dans input_data/ si input_dir est externe 
+# Validation des fichiers d'entrée : arrêt immédiat si format invalide
+_valid_extensions  = {".fasta", ".fa", ".fna", ".fas"}
+_ignore_extensions = {".fai", ".gzi", ".bai"}  # index auto-générés, ignorés
+_errors = []
+for _f in Path(config["input_dir"]).iterdir():
+    if _f.is_file() and _f.suffix not in _ignore_extensions:
+        if _f.suffix not in _valid_extensions:
+            _errors.append(f"  - {_f.name} : extension non reconnue (attendu .fasta / .fa / .fna / .fas)")
+        elif len(_f.stem.split("_")) < 3:
+            _errors.append(f"  - {_f.name} : nom invalide (attendu espece_chrom_commentaire{_f.suffix})")
+if _errors:
+    _msg = (
+        "\n[ERREUR] Fichiers d'entrée invalides :\n"
+        + "\n".join(_errors)
+        + "\n\nFormat attendu : espece_chrom_commentaire.fasta"
+        + "\nExemple        : Pdestructans_chrom1_run1.fasta\n"
+    )
+    print(_msg)        # visible dans le .log SLURM
+    raise SystemExit(_msg)
+
+
+# Rapatriement des FASTAs dans input_data/ si input_dir est externe
 # samtools faidx écrit le .fai à côté du FASTA — si l'utilisateur pointe vers
 # un dossier externe en lecture seule, la création du .fai planterait.
 # Solution : on copie les FASTAs dans input_data/.
@@ -25,13 +46,15 @@ _external_input = Path(config["input_dir"])
 _local_input    = Path("input_data")
 if _external_input.resolve() != _local_input.resolve():
     _local_input.mkdir(exist_ok=True)
-    # pour chaque FASTA, si la copie locale n'existe pas déjà, la cp dans input_data/
-    for _fasta in _external_input.glob("*.fasta"):
-        _destpath = _local_input / _fasta.name
-        if not _destpath.exists():
-            shutil.copy2(str(_fasta), str(_destpath)) #copy2 inclus metadata
-            print(f"[setup] copié : {_fasta} → {_destpath}")
+    for _ext in _valid_extensions:
+        for _fasta in _external_input.glob(f"*{_ext}"):
+            _destpath = _local_input / _fasta.name
+            if not _destpath.exists():
+                shutil.copy2(str(_fasta), str(_destpath))
+                print(f"[setup] copié : {_fasta} → {_destpath}")
     config["input_dir"] = "input_data/"
+
+
 
 # --- 2. Variables globales --------------------------------------------------
 
@@ -56,7 +79,7 @@ def fasta_to_run_name(fasta_path):
 
 # Découverte des fichiers FASTA dans le répertoire d'entrée
 input_dir = Path(config["input_dir"])
-fasta_files = sorted(input_dir.glob("*.fasta"))
+fasta_files = sorted(f for ext in _valid_extensions for f in input_dir.glob(f"*{ext}"))
 
 # RUNS : dict run_name → {fasta, samples, reference, run_dir}
 # Un run = un fichier FASTA = un chromosome = un dossier de sortie
