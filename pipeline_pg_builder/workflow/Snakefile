@@ -151,6 +151,8 @@ def summary_labels(wildcards):
     # Params labels de build_summary : noms lisibles, même ordre que summary_gfas.
     return [t["label"] for t in active_tools(RUNS[wildcards.run]["run_dir"])]
 
+
+
 # --- 4. Affichage au démarrage ----------------------------------------------
 onstart:
     import time as _time
@@ -168,7 +170,7 @@ onstart:
     print(f"  Outils    : {tools_on}")
     print("=" * 60)
 
-# --- Affichage rappel commandes scp pour les visu à la fin du pipeline -----------------------------------------
+# --- Affichage rappel commandes scp pour les visu à la fin du pipeline ------------------------------
 onsuccess:
     import os, time as _time
     from datetime import datetime
@@ -179,7 +181,7 @@ onsuccess:
     user     = os.getenv("USER", "user")
     out_dir  = config["output_dir"]
 
-    # --- Fichier de suivi des lancements ------------------------------------
+    # --- Fichier de suivi des lancements pip_launches.log --------------------------------
     tracking = _Path(out_dir) / "pipeline_launches.log"
     tracking.parent.mkdir(parents=True, exist_ok=True)
     idx = sum(1 for l in open(tracking) if l.startswith("Launch ")) + 1 if tracking.exists() else 1
