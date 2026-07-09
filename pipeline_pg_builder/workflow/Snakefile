@@ -193,9 +193,10 @@ onsuccess:
     tools_run  = [k for k, v in config["tools"].items() if v]
     runs_done  = list(RUNS.keys())
     date_str   = datetime.now().strftime("%Y-%m-%d %H:%M")
+    ref_used   = str(config["reference"]) if config["reference"] is not None else "first in the fasta" 
     entry = (f"Launch {idx} - {date_str} - "
              f"duration: {h}h{m}min{s}s - "
-             f"runs: {runs_done} - tools: {tools_run}\n")
+             f"runs: {runs_done} - tools: {tools_run} - ref: {ref_used}\n")
     with open(tracking, "a") as f:
         content = tracking.read_text()
         if content and not content.endswith("\n"):
