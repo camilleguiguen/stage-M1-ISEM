@@ -30,7 +30,7 @@ rule run_syri:
         config.get("syri", {}).get("threads", 4)
     shell:
         """
-        bash syri_launch.sh {input.ref} {input.qry} {params.prefix} {params.outdir} {threads}
+        bash workflow/scripts/syri_launch.sh {input.ref} {input.qry} {params.prefix} {params.outdir} {threads}
         """
 
 
