@@ -74,8 +74,8 @@ for label, gfa, log_path in zip(labels, gfas, logs):
     lines.append(f"  Walks (W)      : {stats['walks']:>10,}")
     lines.append(f"  Taille totale  : {stats['total_bp']:>10,} bp")
     lines.append("")
-    lines.append(f"--- {label} — Log (extrait) ---")
-    lines.extend("  " + ln for ln in Path(log_path).read_text().splitlines())
+    lines.append(f"--- {label} — Log (20 dernières lignes) ---")
+    lines.extend("  " + ln for ln in Path(log_path).read_text().splitlines()[-20:])
 
 lines.append("=" * 60)
 
