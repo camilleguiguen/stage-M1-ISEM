@@ -142,6 +142,7 @@ def get_targets():
             targets += [t["bandage"] for t in active_tools(rd)]
         if config["tools"].get("syri", False):
             targets.append(str(rd / "SyRI" / "syri_done.txt"))
+            targets.append(str(rd / "SyRI" / "gtseq_done.txt"))
     return targets
 
 def summary_gfas(wildcards):
@@ -224,3 +225,4 @@ include: "rules/mini-cactus.smk"
 include: "rules/report.smk"
 include: "rules/visu.smk"
 include: "rules/syri.smk"
+include: "rules/syri_to_gtseq.smk"

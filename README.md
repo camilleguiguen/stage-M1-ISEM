@@ -116,6 +116,7 @@ tools:
   pggb: false                # activer/désactiver PGGB
   minigraph_cactus: false    # activer/désactiver Minigraph-Cactus
   visualisation: false       # true = génère et gère les images Bandage
+  syri: false                # lance syri.smk et syti_to_gtseq.smk 
 
 minigraph:
   min_sv_len: 50
@@ -129,6 +130,7 @@ pggb:
 
 minigraph_cactus:
   threads: 4
+  gfa_mode : full # pour que la concat des walks reforme le fasta exact
 ```
 
 ## Sortie
@@ -290,6 +292,16 @@ all_results/
 
 **Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
 Seules les branches activées dans `tools:` sont exécutées.
+
+
+Flux pour syri et construction du GTsequence (si `tools.syri=true`)
+```
+run_syri (syri.smk)          →  {sample}_syri.out
+        ↓
+syri_to_gt (syri_to_gt.smk)  →  GT/BIG_GT.tsv (+ GT_<type>.tsv si présents)
+        ↓
+gt_all (syri_to_gt.smk)      →  SyRI/gtseq_done.txt   (marqueur agrégé, comme syri_done.txt)
+```
 
 ## Option de visualisation d'images png du pangénome
 
