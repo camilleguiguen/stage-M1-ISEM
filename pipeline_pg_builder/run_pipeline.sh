@@ -20,7 +20,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8        # doit être >= threads max dans config.yaml
 #SBATCH --mem=32G
-#SBATCH --time=4:00:00
+#SBATCH --time=72:00:00
 #SBATCH --partition=genouest    #normal, large... (taper 'sinfo' sur le cluster)
 #SBATCH --constraint=avx2
 
