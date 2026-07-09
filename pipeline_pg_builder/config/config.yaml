@@ -36,10 +36,21 @@ tools:
   minigraph: true
   pggb: false
   minigraph_cactus: false
+  syri: false
   visualisation: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
 
 # --- Paramètres Minigraph-Cactus --------------------------------------------
 minigraph_cactus:
+  threads: 4
+  # gfa_mode : variante(s) de graphe demandée(s) à cactus-pangenome (--gfa ...)
+  #   ""        -> défaut cactus = graphe "clip" (séquences non-alignées >10kb retirées)
+  #   "full"    -> graphe complet, aucune séquence retirée : la concaténation des
+  #                noeuds du walk redonne exactement la séquence d'origine
+  #   "clip", "filter" ou une combinaison ("full clip filter") sont aussi possibles.
+  gfa_mode: "full"
+
+# --- Paramètres SyRI ---------------------------------------------------------
+syri:
   threads: 4
 
 # --- Paramètres PGGB --------------------------------------------------------
