@@ -50,8 +50,7 @@ rule run_minigraph_cactus:
     input:
         seqfile = OUTPUT_DIR + "/{run}/MinigraphCactus/seqfile.tsv",
         # Les FASTA sont référencés dans le seqfile — cactus en a besoin au moment
-        # de l'exécution. Les déclarer ici empêche Snakemake de les supprimer
-        # (temp()) avant que cactus ait terminé.
+        # de l'exécution. Les déclarer ici empêche Snakemake de les supprimer (temp()) avant que cactus ait terminé.
         fastas = lambda wc: expand(
             OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
             run=wc.run, sample=RUNS[wc.run]["samples"],
@@ -63,6 +62,7 @@ rule run_minigraph_cactus:
         outdir    = lambda wc: OUTPUT_DIR + f"/{wc.run}/MinigraphCactus",
         jobstore  = lambda wc: OUTPUT_DIR + f"/{wc.run}/MinigraphCactus/jobstore",
         reference = lambda wc: RUNS[wc.run]["reference"],
+        gfa_mode  = config["minigraph_cactus"].get("gfa_mode", ""),
     threads:
         config["minigraph_cactus"].get("threads", 4)
     container:
@@ -76,17 +76,22 @@ rule run_minigraph_cactus:
         # cactus-pangenome produit un GFA dans outdir/
         # --maxCores limite le nombre de cœurs utilisés
         # --reference désigne l'isolat de référence (doit correspondre à la 1re ligne du seqfile)
+        # --gfa {params.gfa_mode} : variante de graphe (cf. config.yaml, minigraph_cactus.gfa_mode)
+        #   "full" -> graphe complet (aucune séquence retirée), fichier produit *.full.gfa.gz
         cactus-pangenome {params.jobstore} {input.seqfile} \
             --outDir {params.outdir} \
             --outName pangenome_MGC \
             --reference {params.reference} \
             --maxCores $(( {threads} > 4 ? {threads} : 4 )) \
-            --gfa \
+            --gfa {params.gfa_mode} \
             > {output.log} 2>&1
 
-        # Cactus produit un GFA compressé (*.gfa.gz, hors *.sv.gfa.gz)
-        # → on le décompresse vers le nom standard attendu par Snakemake
-        final_gz=$(find {params.outdir} -maxdepth 1 -name "*.gfa.gz" ! -name "*.sv.gfa.gz" 2>/dev/null | head -1)
+        # Cactus produit un GFA compressé (*.gfa.gz, hors *.sv.gfa.gz) on le décompresse vers le nom standard attendu par Snakemake
+        # Si plusieurs variantes sont demandées, priorité à .full.gfa.gz > .gfa.gz (clip) > .dN.gfa.gz (filter)
+        final_gz=$(find {params.outdir} -maxdepth 1 -name "*.full.gfa.gz" 2>/dev/null | head -1)
+        if [ -z "$final_gz" ]; then
+            final_gz=$(find {params.outdir} -maxdepth 1 -name "*.gfa.gz" ! -name "*.sv.gfa.gz" ! -name "*.full.gfa.gz" 2>/dev/null | head -1)
+        fi
         if [ -z "$final_gz" ]; then
             echo "ERREUR : aucun GFA produit par cactus dans {params.outdir}" >&2
             exit 1
