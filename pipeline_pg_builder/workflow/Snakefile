@@ -15,14 +15,15 @@ import shutil
 from pathlib import Path
 
 # --- 1. Chargement de la config ---------------------------------------------
-configfile: "config/config.yaml"
+CONFIG_PATH = "config/config.yaml"
+configfile: CONFIG_PATH
 
 # Validation des fichiers d'entrée : arrêt immédiat si format invalide
 _valid_extensions  = {".fasta", ".fa", ".fna", ".fas"}
 _ignore_extensions = {".fai", ".gzi", ".bai"}  # index auto-générés, ignorés
 _errors = []
 for _f in Path(config["input_dir"]).iterdir():
-    if _f.is_file() and _f.suffix not in _ignore_extensions:
+    if _f.is_file() and not _f.name.startswith(".") and _f.suffix not in _ignore_extensions:
         if _f.suffix not in _valid_extensions:
             _errors.append(f"  - {_f.name} : extension non reconnue (attendu .fasta / .fa / .fna / .fas)")
         elif len(_f.stem.split("_")) < 3:
@@ -130,13 +131,17 @@ def active_tools(run_dir):
 def get_targets():
     # Cibles finales de rule all : GFAs + résumé pour chaque run détecté.
     # Si visualisation: true, ajoute les images Bandage de chaque outil actif.
+    # Si syri: true, ajoute le marqueur syri_done.txt (agrège toutes les comparaisons pairwise).
     targets = []
     for run in RUNS.values():
         rd = run["run_dir"]
         targets += [t["gfa"] for t in active_tools(rd)]
         targets.append(str(rd / "runs_summary_update.txt"))
+        targets.append(str(rd / "config_used.yaml"))
         if config["tools"].get("visualisation", False):
             targets += [t["bandage"] for t in active_tools(rd)]
+        if config["tools"].get("syri", False):
+            targets.append(str(rd / "SyRI" / "syri_done.txt"))
     return targets
 
 def summary_gfas(wildcards):
@@ -217,3 +222,4 @@ include: "rules/pggb.smk"
 include: "rules/mini-cactus.smk"
 include: "rules/report.smk"
 include: "rules/visu.smk"
+include: "rules/syri.smk"
