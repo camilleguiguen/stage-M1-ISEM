@@ -6,6 +6,9 @@
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
 
+# ATTENTION en standalone il faut conda activate syri-env
+
+
 # Usage : sbatch syri_launch.sh <ref.fa> <query.fa> <prefix> [outdir] [threads]
 #         bash   syri_launch.sh <ref.fa> <query.fa> <prefix> [outdir] [threads]
 # ex    : bash   syri_launch.sh i1.fasta i4.fasta i1vsi4
