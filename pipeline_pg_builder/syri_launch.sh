@@ -6,19 +6,35 @@
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
 
-# Usage : sbatch syri_launch.sh i1.fasta i2.fasta i1vs2
+# Usage : sbatch syri_launch.sh <ref.fa> <query.fa> <prefix> [outdir] [threads]
+#         bash   syri_launch.sh <ref.fa> <query.fa> <prefix> [outdir] [threads]
+# ex    : bash   syri_launch.sh i1.fasta i4.fasta i1vsi4
+#          → crée ./i1vsi4_syri/i1vsi4_syri.out
+#         bash   syri_launch.sh ref.fa qry.fa sample results/SyRI 8
+#          → crée results/SyRI/sample_syri/sample_syri.out
+
+set -euo pipefail
 
 REF=$1
 QRY=$2
 PREFIX=$3
+OUTDIR=${4:-.}
+CPUS=${5:-${SLURM_CPUS_PER_TASK:-4}}
 
-# ÉTAPE 1 : Aligner
-minimap2 -a -x asm5 --eqx -t $SLURM_CPUS_PER_TASK $REF $QRY > ${PREFIX}.sam
+mkdir -p "${OUTDIR}"
 
-# Étape 2 : Convertir en BAM
-samtools sort ${PREFIX}.sam -o ${PREFIX}.sorted.bam
-rm ${PREFIX}.sam
+# Alignement ref vs query
+minimap2 -a -x asm5 --eqx -t "${CPUS}" "${REF}" "${QRY}" > "${OUTDIR}/${PREFIX}.sam"
 
-# Étape 3 : SyRI
-mkdir -p ${PREFIX}_syri
-syri -c ${PREFIX}.sorted.bam -r $REF -q $QRY -F B -k --prefix ${PREFIX}_syri/${PREFIX}_
+# Conversion SAM → BAM trié
+samtools sort "${OUTDIR}/${PREFIX}.sam" -o "${OUTDIR}/${PREFIX}.sorted.bam"
+rm "${OUTDIR}/${PREFIX}.sam"
+
+# Détection de variants structuraux avec SyRI
+mkdir -p "${OUTDIR}/${PREFIX}_syri"
+syri -c "${OUTDIR}/${PREFIX}.sorted.bam" \
+    -r "${REF}" \
+    -q "${QRY}" \
+    -F B -k \
+    --dir "${OUTDIR}/${PREFIX}_syri" \
+    --prefix "${PREFIX}_"
