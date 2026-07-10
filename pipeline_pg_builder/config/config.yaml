@@ -36,7 +36,7 @@ tools:
   minigraph: true
   pggb: false
   minigraph_cactus: false
-  syri: false
+  GTsequences : false
   visualisation: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
 
 # --- Paramètres Minigraph-Cactus --------------------------------------------

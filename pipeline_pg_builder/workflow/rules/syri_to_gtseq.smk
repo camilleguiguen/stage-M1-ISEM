@@ -47,21 +47,35 @@ rule syri_to_gtseq:
         "../scripts/syri_to_GT_v2.py"
 
 
-# --- Étape 2 : point de synchro — attend que toutes les conversions GT
-# d'un run soient terminées. Même logique que `syri_all` (syri.smk) :
-# agrège tous les isolats non-référence et écrit un fichier marqueur.
-rule gt_all:
+# --- Étape : fusionner les GT de tous les isolats + réassigner les id_event -
+rule merge_gtseq:
     input:
-        lambda wc: expand(
+        # Un BIG_GT.tsv par isolat non-référence — garantit que syri_to_gtseq
+        # est terminé pour CET isolat (ce fichier est toujours créé, même
+        # vide, par write_big_GT() dans syri_to_GT_v2.py)
+        sample_big_gt = lambda wc: expand(
             OUTPUT_DIR + "/{run}/SyRI/{sample}_syri/GT/BIG_GT.tsv",
             run=wc.run,
             sample=[s for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]],
         ),
     output:
+        big_gt = OUTPUT_DIR + "/{run}/SyRI/GTsequences/BIG_GT.tsv",
+    params:
+        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI/GTsequences",
+    script:
+        "../scripts/merge_gtseq.py"
+
+
+# --- Point de synchro final : un seul fichier à surveiller maintenant ------
+# --- attend que toutes les conversions GT d'un run soient terminées. Même logique que `syri_all` (syri.smk) :
+# agrège tous les isolats non-référence et écrit un fichier marqueur.
+rule gt_all:
+    input:
+        OUTPUT_DIR + "/{run}/SyRI/GTsequences/BIG_GT.tsv",
+    output:
         done = OUTPUT_DIR + "/{run}/SyRI/gtseq_done.txt",
     shell:
         r"""
-        echo "Conversion SyRI -> GT terminée — $(date)" > {output.done}
-        echo "Tables générées :" >> {output.done}
-        for f in {input}; do echo "  $f" >> {output.done}; done
+        echo "Fusion GTsequences terminée — $(date)" > {output.done}
+        echo "Fichier final : {input}" >> {output.done}
         """

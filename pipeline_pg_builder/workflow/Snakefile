@@ -140,9 +140,9 @@ def get_targets():
         targets.append(str(rd / "config_used.yaml"))
         if config["tools"].get("visualisation", False):
             targets += [t["bandage"] for t in active_tools(rd)]
-        if config["tools"].get("syri", False):
-            targets.append(str(rd / "SyRI" / "syri_done.txt"))
-            targets.append(str(rd / "SyRI" / "gtseq_done.txt"))
+        if config["tools"].get("GTsequences", False):
+            targets.append(str(rd / "Syri&GTsequences" / "syri_done.txt"))
+            targets.append(str(rd / "Syri&GTsequences" / "gtseq_done.txt"))
     return targets
 
 def summary_gfas(wildcards):
