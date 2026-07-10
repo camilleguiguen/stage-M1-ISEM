@@ -27,7 +27,7 @@ rule run_syri:
         ref = lambda wc: OUTPUT_DIR + f"/{wc.run}/per_sample/{RUNS[wc.run]['reference']}.fa",
         qry = OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
     output:
-        syri_out = OUTPUT_DIR + "/{run}/SyRI/{sample}_syri/{sample}_syri.out",
+        syri_out = OUTPUT_DIR + "/{run}/SyRI&GTsequences/{sample}_syri/{sample}_syri.out",
     params:
         prefix = lambda wc: wc.sample,
         outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI",
