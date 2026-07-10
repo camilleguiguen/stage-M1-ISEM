@@ -31,17 +31,23 @@ rule run_syri:
     params:
         prefix = lambda wc: wc.sample,
         outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI",
+        # Chemin vers le script d'init conda (nécessaire pour que `conda activate`
+        # fonctionne dans un shell non-interactif comme celui lancé par Snakemake)
+        conda_sh  = "/home/genouest/cnrs_umr5554/cguiguen/miniconda3/etc/profile.d/conda.sh",
+        conda_env = "syri-env",
     threads:
         config.get("syri", {}).get("threads", 4)
     shell:
         """
-        # Injecte le bin/ de syri-env EN TÊTE du PATH pour cette commande
-        # uniquement (n'affecte pas le reste du pipeline / les autres règles)
-        export PATH="{SYRI_ENV_BIN}:$PATH"
+        # Solution temporaire : un simple export PATH ne suffit pas car syri
+        # charge des bibliothèques partagées (ex: libgomp.so.1 pour igraph)
+        # qui vivent dans envs/syri-env/lib/ — seul un vrai `conda activate`
+        # configure correctement LD_LIBRARY_PATH (et le reste) pour ça.
+        source {params.conda_sh}
+        conda activate {params.conda_env}
 
         bash workflow/scripts/syri_launch.sh {input.ref} {input.qry} {params.prefix} {params.outdir} {threads}
         """
-
 
 # --- point de synchro (inchangé) --------------------------------------------
 rule syri_all:
