@@ -53,12 +53,12 @@ rule run_syri:
 rule syri_all:
     input:
         lambda wc: expand(
-            OUTPUT_DIR + "/{run}/SyRI/{sample}_syri/{sample}_syri.out",
+            OUTPUT_DIR + "/{run}/SyRI&GTsequences/{sample}_syri/{sample}_syri.out",
             run=wc.run,
             sample=[s for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]],
         ),
     output:
-        done = OUTPUT_DIR + "/{run}/SyRI/syri_done.txt",
+        done = OUTPUT_DIR + "/{run}/SyRI&GTsequences/syri_done.txt",
     params:
         ref = lambda wc: RUNS[wc.run]["reference"],
     shell:
