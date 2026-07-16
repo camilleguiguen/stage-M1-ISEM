@@ -31,10 +31,11 @@ samtools sort "${OUTDIR}/${PREFIX}.sam" -o "${OUTDIR}/${PREFIX}.sorted.bam"
 rm "${OUTDIR}/${PREFIX}.sam"
 
 # Détection de variants structuraux avec SyRI
+# suppression du -k de -F B -k pour ne pas keep les fichiers intermediaires
 mkdir -p "${OUTDIR}/${PREFIX}_syri"
 syri -c "${OUTDIR}/${PREFIX}.sorted.bam" \
     -r "${REF}" \
     -q "${QRY}" \
-    -F B -k \
+    -F B \
     --dir "${OUTDIR}/${PREFIX}_syri" \
     --prefix "${PREFIX}_"
