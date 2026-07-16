@@ -15,7 +15,7 @@ output_dir: "all_results"
 # --- Sélection des isolats --------------------------------------------------
 # Pour tester sur un sous-ensemble : N premiers isolats de chaque FASTA.
 # Mettre `null` (ou supprimer la ligne) pour prendre tous les isolats.
-n_first: 5
+n_first: null
 
 # Isolat de référence (premier de la liste si null)
 reference: null
@@ -36,7 +36,7 @@ tools:
   minigraph: true
   pggb: false
   minigraph_cactus: false
-  GTsequences : false
+  GTsequences: false
   visualisation: false   # true = génère les images Bandage (+ déplace les PNGs PGGB dans visu_images/)
 
 # --- Paramètres Minigraph-Cactus --------------------------------------------
