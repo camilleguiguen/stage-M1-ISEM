@@ -1,14 +1,12 @@
 """Fusionne les tables GT de TOUS les isolats d'un run en une seule table,
 puis reassigne les id_event a l'echelle du run entier.
 
-Etapes (cf. discussion) :
+Etapes :
   1. concatene les GT_<type>.tsv de tous les isolats, TYPE PAR TYPE
      (ex : tous les GT_INS.tsv -> une seule liste INS)
   2. trie chaque liste de type par position sur la reference -> BIG_GT_<type>.tsv
   3. concatene les BIG_GT_<type> dans l'ordre de ORDER, SANS melanger les
-     types (toutes les INS, puis toutes les DEL, etc.) -- on ne retrie plus
-     jamais apres ca (c'etait le bug : l'ancien write_big_GT retriait par
-     id_qry, ce qui detruisait ce regroupement)
+     types (toutes les INS, puis toutes les DEL, etc.)
   4. assigne les id_event, un bloc de type a la fois, sur le bigGT deja
      concatene (itertools.groupby, sur ici car le type est reste la cle de
      tri primaire -> les blocs sont garantis contigus)
@@ -78,9 +76,17 @@ def merge_gt(sample_big_gt_files, outdir):
     for sv_type in ORDER:
         all_rows.extend(GTs_by_type.get(sv_type, []))
 
-    # 4) assignation des evenements, un bloc de type a la fois
+    # 4) assignation des evenements, un bloc de type a la fois, avec un
+    #    id_event qui ne reprend pas a 0 à chaque nouveau type :
+    #    (offset = dernier id_event du type precedent + 1)
+    offset = 0
     for sv_type, block in itertools.groupby(all_rows, key=lambda r: r["type"]):
-        assigner_event(list(block), sv_type)
+        block_rows = list(block)
+        assigner_event(block_rows, sv_type)          # id_event local (0-indexe) pour CE type
+        for row in block_rows:
+            row["id_event"] = int(row["id_event"]) + offset
+        if block_rows:
+            offset = max(int(r["id_event"]) for r in block_rows) + 1
 
     write_big_GT(all_rows, outdir)
 
