@@ -27,10 +27,10 @@ rule run_syri:
         ref = lambda wc: OUTPUT_DIR + f"/{wc.run}/per_sample/{RUNS[wc.run]['reference']}.fa",
         qry = OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
     output:
-        syri_out = OUTPUT_DIR + "/{run}/SyRI&GTsequences/{sample}_syri/{sample}_syri.out",
+        syri_out = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/{sample}_syri/{sample}_syri.out",
     params:
         prefix = lambda wc: wc.sample,
-        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI&GTsequences",
+        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences",
         # Chemin vers le script d'init conda (nécessaire pour que `conda activate`
         # fonctionne dans un shell non-interactif comme celui lancé par Snakemake)
         conda_sh  = "/home/genouest/cnrs_umr5554/cguiguen/miniconda3/etc/profile.d/conda.sh",
@@ -53,12 +53,12 @@ rule run_syri:
 rule syri_all:
     input:
         lambda wc: expand(
-            OUTPUT_DIR + "/{run}/SyRI&GTsequences/{sample}_syri/{sample}_syri.out",
+            OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/{sample}_syri/{sample}_syri.out",
             run=wc.run,
             sample=[s for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]],
         ),
     output:
-        done = OUTPUT_DIR + "/{run}/SyRI&GTsequences/syri_done.txt",
+        done = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/syri_done.txt",
     params:
         ref = lambda wc: RUNS[wc.run]["reference"],
     shell:
