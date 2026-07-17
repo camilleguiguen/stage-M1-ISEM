@@ -63,4 +63,4 @@ pggb:
 GTsequences:
   # true  = garde tout (.sorted.bam, {sample}_syri/, GT/ par isolat)
   # false = ne garde que SyRI_and_GTsequences/GTsequences/ (résumé fusionné du run)
-  keep_per_sample_outputs: true
+  keep_per_sample_outputs: false
