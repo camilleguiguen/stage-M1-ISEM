@@ -133,7 +133,7 @@ minigraph_cactus:
   gfa_mode : full # pour que la concat des walks reforme le fasta exact
 
 GTsequences:
-  keep_per_sample_outputs: false #permet de ne garder que les GT sequences finaux
+  keep_per_sample_outputs: true #permet de ne garder que les GT sequences finaux
 ```
 
 ## Sortie
