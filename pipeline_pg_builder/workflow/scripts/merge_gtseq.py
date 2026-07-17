@@ -18,7 +18,7 @@ import itertools
 import os
 from pathlib import Path
 
-from syri_to_GT_v2 import ORDER, sort_rows
+from syri_to_GTseq import ORDER, sort_rows
 from assign_event import assigner_event
 
 
