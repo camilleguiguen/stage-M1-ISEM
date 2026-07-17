@@ -10,7 +10,7 @@ et assign_event.py (même dossier workflow/scripts/).
 import csv
 from pathlib import Path
 
-from syri_to_GT_v2 import ORDER, sort_rows, write_tables, write_big_GT
+from syri_to_GT_v3 import ORDER, sort_rows, write_tables, write_big_GT
 from assign_event import assigner_event
 
 

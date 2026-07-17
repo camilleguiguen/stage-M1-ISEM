@@ -44,7 +44,7 @@ rule syri_to_gtseq:
     script:
         # Chemin relatif à CE fichier .smk (donc depuis workflow/rules/)
         # -> pointe vers le script copié dans workflow/scripts/
-        "../scripts/syri_to_GT_v2.py"
+        "../scripts/syri_to_GT_v3.py"
 
 
 # --- Étape : fusionner les GT de tous les isolats + réassigner les id_event -
