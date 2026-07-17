@@ -30,7 +30,7 @@ rule run_syri:
         syri_out = OUTPUT_DIR + "/{run}/SyRI&GTsequences/{sample}_syri/{sample}_syri.out",
     params:
         prefix = lambda wc: wc.sample,
-        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI",
+        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI&GTsequences",
         # Chemin vers le script d'init conda (nécessaire pour que `conda activate`
         # fonctionne dans un shell non-interactif comme celui lancé par Snakemake)
         conda_sh  = "/home/genouest/cnrs_umr5554/cguiguen/miniconda3/etc/profile.d/conda.sh",
