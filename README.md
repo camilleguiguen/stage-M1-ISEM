@@ -116,7 +116,7 @@ tools:
   pggb: false                # activer/désactiver PGGB
   minigraph_cactus: false    # activer/désactiver Minigraph-Cactus
   visualisation: false       # true = génère et gère les images Bandage
-  syri: false                # lance syri.smk et syti_to_gtseq.smk 
+  GTsequences: false         # lance syri.smk et syti_to_gtseq.smk 
 
 minigraph:
   min_sv_len: 50
@@ -131,6 +131,9 @@ pggb:
 minigraph_cactus:
   threads: 4
   gfa_mode : full # pour que la concat des walks reforme le fasta exact
+
+GTsequences:
+  keep_per_sample_outputs: false #permet de ne garder que les GT sequences finaux
 ```
 
 ## Sortie

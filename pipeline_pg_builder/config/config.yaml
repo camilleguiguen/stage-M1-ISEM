@@ -59,3 +59,8 @@ pggb:
   segment_length: 5000 # -s : longueur de segment
   percent_identity: 90 # -p : % identité minimum
   threads: 4
+
+GTsequences:
+  # true  = garde tout (.sorted.bam, {sample}_syri/, GT/ par isolat)
+  # false = ne garde que SyRI_and_GTsequences/GTsequences/ (résumé fusionné du run)
+  keep_per_sample_outputs: false

@@ -69,13 +69,59 @@ rule merge_gtseq:
 # --- Point de synchro final : un seul fichier à surveiller maintenant ------
 # --- attend que toutes les conversions GT d'un run soient terminées. Même logique que `syri_all` (syri.smk) :
 # agrège tous les isolats non-référence et écrit un fichier marqueur.
+# ancienne rule qui garde tt les GT et result syri
+#rule gt_all:
+#    input:
+#        OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/GTsequences/BIG_GT.tsv",
+#    output:
+#        done = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/gtseq_done.txt",
+#    shell:
+#        r"""
+#        echo "Fusion GTsequences terminée — $(date)" > {output.done}
+#        echo "Fichier final : {input}" >> {output.done}
+#        """
+
+# Lu une seule fois au chargement du Snakefile (comme les autres options config)
+KEEP_PER_SAMPLE_GT = config.get("GTsequences", {}).get("keep_per_sample_outputs", True)
+
 rule gt_all:
     input:
-        OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/GTsequences/BIG_GT.tsv",
+        big_gt    = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/GTsequences/BIG_GT.tsv",
+        # dépendance ajoutée : force gt_all à attendre que syri_all (qui liste
+        # et donc "consomme" les .out de chaque isolat) soit terminé, avant
+        # de pouvoir supprimer ces mêmes .out ci-dessous
+        syri_done = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/syri_done.txt",
     output:
         done = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/gtseq_done.txt",
-    shell:
-        r"""
-        echo "Fusion GTsequences terminée — $(date)" > {output.done}
-        echo "Fichier final : {input}" >> {output.done}
-        """
+    params:
+        keep_per_sample = KEEP_PER_SAMPLE_GT,
+        base_dir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences",
+        samples  = lambda wc: [s for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]],
+    run:
+        import shutil
+        from pathlib import Path
+        from datetime import datetime
+
+        lines = [
+            f"Fusion GTsequences terminée — {datetime.now().isoformat(timespec='seconds')}",
+            f"Fichier final : {input.big_gt}",
+        ]
+
+        if not params.keep_per_sample:
+            base = Path(params.base_dir)
+            removed = []
+            for sample in params.samples:
+                sample_dir = base / f"{sample}_syri"   # contient .out/.log/.vcf/.summary + GT/
+                bam_file   = base / f"{sample}.sorted.bam"
+                if sample_dir.exists():
+                    shutil.rmtree(sample_dir)
+                    removed.append(str(sample_dir))
+                if bam_file.exists():
+                    bam_file.unlink()
+                    removed.append(str(bam_file))
+            lines.append("Sorties par isolat supprimées (GTsequences.keep_per_sample_outputs: false) :")
+            lines.extend(f"  {r}" for r in removed)
+        else:
+            lines.append("Sorties par isolat conservées (GTsequences.keep_per_sample_outputs: true)")
+
+        Path(output.done).write_text("\n".join(lines) + "\n")
