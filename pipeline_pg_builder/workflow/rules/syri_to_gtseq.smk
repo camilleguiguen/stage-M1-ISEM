@@ -8,7 +8,7 @@
 # Réutilise le fichier {sample}_syri.out produit par la règle `run_syri`
 # (cf. workflow/rules/syri.smk) — même dépendance que dans syri_all.
 #
-# Le script workflow/scripts/syri_to_GT_v2.py contient DÉJÀ le bloc qui le
+# Le script workflow/scripts/syri_to_GTseq.py contient DÉJÀ le bloc qui le
 # relie à Snakemake (on ne le modifie pas) :
 #
 #   if "snakemake" in dir():
@@ -19,7 +19,7 @@
 #
 # IMPORTANT : le script fait "from assign_event import assigner_event".
 # assign_event.py doit donc être copié dans workflow/scripts/, au même
-# endroit que syri_to_GT_v2.py (Snakemake ajoute le dossier du script à
+# endroit que syri_to_GTseq.py (Snakemake ajoute le dossier du script à
 # sys.path, ce qui permet cet import "local").
 # =============================================================================
 
@@ -32,7 +32,7 @@ rule syri_to_gtseq:
         # -> même chemin que l'output de la rule run_syri dans syri.smk
         OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/{sample}_syri/{sample}_syri.out",
     output:
-        # write_big_GT() dans syri_to_GT_v2.py écrit TOUJOURS ce fichier
+        # write_big_GT() dans syri_to_GTseq.py écrit TOUJOURS ce fichier
         # (même vide, avec juste l'en-tête), contrairement aux GT_<type>.tsv
         # qui ne sont créés que si ce type de SV est présent dans le .out.
         # -> c'est donc le seul fichier "fiable" à déclarer comme output Snakemake.
@@ -44,7 +44,7 @@ rule syri_to_gtseq:
     script:
         # Chemin relatif à CE fichier .smk (donc depuis workflow/rules/)
         # -> pointe vers le script copié dans workflow/scripts/
-        "../scripts/syri_to_GT_v3.py"
+        "../scripts/syri_to_GTseq.py"
 
 
 # --- Étape : fusionner les GT de tous les isolats + réassigner les id_event -
@@ -52,7 +52,7 @@ rule merge_gtseq:
     input:
         # Un BIG_GT.tsv par isolat non-référence — garantit que syri_to_gtseq
         # est terminé pour CET isolat (ce fichier est toujours créé, même
-        # vide, par write_big_GT() dans syri_to_GT_v2.py)
+        # vide, par write_big_GT() dans syri_to_GTseq.py)
         sample_big_gt = lambda wc: expand(
             OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/{sample}_syri/GT/BIG_GT.tsv",
             run=wc.run,

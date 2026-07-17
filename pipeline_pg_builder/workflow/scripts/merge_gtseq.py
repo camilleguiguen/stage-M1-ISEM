@@ -4,18 +4,18 @@ par isolat) — c'est cette fusion qui permet de détecter qu'un même évèneme
 structurel est partagé par plusieurs isolats.
 
 Appelé par la règle `merge_gtseq` du Snakefile (script: directive).
-Réutilise SANS LES MODIFIER les fonctions déjà écrites dans syri_to_GT_v2.py
+Réutilise SANS LES MODIFIER les fonctions déjà écrites dans syri_to_GTseq.py
 et assign_event.py (même dossier workflow/scripts/).
 """
 import csv
 from pathlib import Path
 
-from syri_to_GT_v3 import ORDER, sort_rows, write_tables, write_big_GT
+from syri_to_GTseq import ORDER, sort_rows, write_tables, write_big_GT
 from assign_event import assigner_event
 
 
 def read_gt_tsv(path):
-    """Lit un GT_<type>.tsv déjà produit par syri_to_GT_v2.py pour UN isolat.
+    """Lit un GT_<type>.tsv déjà produit par syri_to_GTseq.py pour UN isolat.
     On ignore la colonne id_event déjà présente : elle sera entièrement
     recalculée après fusion de tous les isolats (les anciens ids n'ont de
     sens que dans le contexte d'un seul isolat)."""

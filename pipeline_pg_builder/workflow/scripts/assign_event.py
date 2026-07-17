@@ -3,7 +3,7 @@ from collections import deque
 
 NULL_ITEM = "-"
 
-# doit rester cohérent avec ORDER dans syri_to_GT_v2.py
+# doit rester cohérent avec ORDER dans syri_to_GTseq.py
 ORDER = ["INS", "DEL", "INV", "DUP", "INVDP", "TRA", "INVTR", "TDM"]
 
 

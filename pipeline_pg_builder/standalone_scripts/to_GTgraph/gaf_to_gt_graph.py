@@ -48,7 +48,7 @@ import argparse
 import csv
 import re
 
-# types finaux après fusion des types spéciaux dans syri_to_GT_v2.merge_special_types
+# types finaux après fusion des types spéciaux dans syri_to_GTseq.merge_special_types
 # (INVDP a été replié dans DUP, INVTR a été replié dans TRA)
 GT_NODE_TYPES = ["INS", "DEL", "INV", "DUP", "TRA", "TDM"]
 

@@ -7,7 +7,7 @@ Organisation retenue (cf. discussion) : remplissage, tri, concat, id_event.
      de lignes (pas de dict par type), en corrigeant au passage le bug de
      `merge_special_types` (cf. note plus bas) : INVDP -> DUP, INVTR -> TRA,
      et REELLEMENT renommé dans le champ "type" (contrairement à
-     syri_to_GT_v2.merge_special_types, où la ligne de renommage est
+     syri_to_GTseq.merge_special_types, où la ligne de renommage est
      commentée -- à corriger là-bas aussi si vous réutilisez ce script).
   2. tri : UN SEUL appel à .sort() sur toute la liste, avec la clé
      (rang_du_type, id_ref, position_debut_sur_ref). Ça construit le bigGT
@@ -41,14 +41,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "standalone_scripts"))
 
 from assign_event import assigner_event, NULL_ITEM  # noqa: E402
-from syri_to_GT_v2 import (  # noqa: E402
+from syri_to_GTseq import (  # noqa: E402
     get_id_allele, get_reverse, get_pos_qry, sv_length, COLUMNS,
 )
 
 # Types acceptés en sortie de SyRI (avant fusion)
 RAW_TYPES = {"INS", "DEL", "INV", "DUP", "INVDP", "TRA", "INVTR", "TDM"}
 
-# Fusion des types spéciaux -- ATTENTION : dans syri_to_GT_v2.merge_special_types,
+# Fusion des types spéciaux -- ATTENTION : dans syri_to_GTseq.merge_special_types,
 # la ligne équivalente à ce dict (row["type"] = dest_type) est commentée : les
 # lignes INVDP/INVTR y gardent leur type d'origine après fusion, ce qui casse
 # un regroupement ultérieur par (type, id_event). Ici on renomme réellement.

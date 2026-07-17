@@ -2,8 +2,8 @@
 
 # Convert a SyRI .out file to per-type GT tables.
 
-# - Standalone : python syri_to_GT_v2.py <syri.out> [--outdir <dir>]
-#           ex : python syri_to_GT_v2.py i1vs2_syri.out --outdir outdirGT_test
+# - Standalone : python syri_to_GTseq.py <syri.out> [--outdir <dir>]
+#           ex : python syri_to_GTseq.py i1vs2_syri.out --outdir outdirGT_test
 # - Snakemake  : rule syri_to_gt: script: "syri_to_GT.py"
 
 # Nbline / file :  wc -l *.tsv | sort -rn

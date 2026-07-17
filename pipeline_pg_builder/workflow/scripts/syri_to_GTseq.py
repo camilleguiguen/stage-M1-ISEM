@@ -2,8 +2,8 @@
 
 # Convert a SyRI .out file to per-type GT tables.
 
-# - Standalone : python syri_to_GT_v2.py <syri.out> [--outdir <dir>]
-#           ex : python syri_to_GT_v2.py i1vs2_syri.out --outdir outdirGT_test
+# - Standalone : python syri_to_GTseq.py <syri.out> [--outdir <dir>]
+#           ex : python syri_to_GTseq.py i1vs2_syri.out --outdir outdirGT_test
 # - Snakemake  : rule syri_to_gt: script: "syri_to_GT.py"
 
 # Nbline / file :  wc -l *.tsv | sort -rn
@@ -88,6 +88,23 @@ def sv_length(sv_type, ref_start, ref_end, qry_start, qry_end):
         return NULL_ITEM
 
 
+MIN_SV_LENGTH = 50
+
+
+def passes_length_filter(sv_length_value):
+    # renvoie False si |sv_length| < MIN_SV_LENGTH (filtre les petits SV)
+    # sv_length_value peut être : int, str du type "(123)" (cas DEL), ou NULL_ITEM
+    if sv_length_value == NULL_ITEM:
+        return True  # on ne filtre pas les valeurs non calculables
+
+    if isinstance(sv_length_value, str):
+        length = int(sv_length_value.strip("()"))
+    else:
+        length = sv_length_value
+
+    return abs(length) >= MIN_SV_LENGTH
+
+
 def merge_special_types(GTs_by_type):
     # si la table INVTR ou INVDP existe, ajoute ses lignes à TRA ou DUP puis vide la table d'origine
     # TODO : j'ai pas encore renommé les types parce que comment on va faire pour les identifier ?
@@ -141,6 +158,10 @@ def parse_syri(syri_file):
             if sv_type not in GTs_by_type:
                 continue
 
+            length_value = sv_length(sv_type, fields[1], fields[2], fields[6], fields[7])
+            if not passes_length_filter(length_value):
+                continue
+
             GTs_by_type[sv_type].append({
                 "id_event":       NULL_ITEM,
                 "type":           sv_type,
@@ -150,7 +171,7 @@ def parse_syri(syri_file):
                 "pos_ref":        f"({fields[1]}, {fields[2]})",
                 "id_qry":         fields[5],
                 "pos_qry":        get_pos_qry(sv_type, fields[6], fields[7]),
-                "sv_length":      sv_length(sv_type, fields[1], fields[2], fields[6], fields[7]),
+                "sv_length":      length_value,
                 "complex_region": NULL_ITEM,
                 "fiability":      NULL_ITEM,
                 "margin_of_error": NULL_ITEM,
