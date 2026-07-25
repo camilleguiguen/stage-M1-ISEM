@@ -4,35 +4,15 @@ Prend en entrée un ou plusieurs **multi-FASTA assemblés** et produit un ou plu
 
 ## Sommaire
 
-- [Structure](#structure)
 - [Lancement](#lancement)
   - [Via le script SLURM](#via-le-script-slurm-recommandé-sur-cluster)
   - [Mode manuel](#mode-manuel-sans-slurm)
 - [Configuration](#configuration-obligatoire)
 - [Sortie](#sortie)
 - [Tester le pipeline](#tester-le-pipeline-avec-le-fichier-de-test-fourni)
-- [Images Apptainer et rules](#images-apptainer-et-règles-du-pipeline)
+- [Images Apptainer, arborescence et rules](#images-apptainer-arborescence-et-règles-du-pipeline)
 - [Visualisation graphique](#option-de-visualisation-dimages-png-du-pangénome)
 - [Perspectives d'amélioration](#perspectives-damélioration-pour-ce-pipeline)
-
-## Structure
-Arborescence générale du pipeline :
-```
-pipeline_pg_builder/
-├── config/config.yaml              ← fichier de config à éditer
-└── input_data/                     ← dossier où peuvent être copié les fichiers d'entrée
-└── workflow/
-    ├── Snakefile                   ← point d'entée (main) : config, variables globales, rule all, includes
-    ├── rules/
-    │   ├── minigraph.smk           ← rules pour minigraph
-    │   ├── pggb.smk                ← rules pour PGGB
-    │   ├── mini-cactus             ← rules pour minigraph-cactus
-    │   ├── report.smk              ← build_summary
-    │   ├── syri.smk                ← rules pour la detection de SV avec SyRI
-    │   ├── syri_to_GT.smk          ← rules pour passer des SV trouvés au GT séquences
-    │   └── visu.smk                ← génère des images Bandage et ODGI
-    └── scripts/**                  ← scripts python appelés par les rules 
-```
 
 
 ## Lancement
@@ -43,14 +23,15 @@ git clone https://github.com/camilleguiguen/stage-M1-ISEM.git
 tree # pour voir l'arborescence 
 ```
 
-**Pour pouvoir lancer le pipeline Snakemake il y a 2 impératifs :**
+**Pour pouvoir lancer le pipeline Snakemake il y a 3 impératifs :**
   - Avoir édité le **fichier de configuration** (voir ci dessous [Configuration](#configuration-obligatoire)).
+  - Avoir nommé vos fichiers fasta d'entrée selon la **convention de nommage obligatoire** (voir [Configuration](#configuration-obligatoire))
   - Avoir un **environnement où Apptainer** est installé (vérifier avec `apptainer --version`). 
     > **Attention** : si vous êtes sur le cluster Genouest, soyez sûr d'être sur un noeud avec AVX2 (Advanced Vector Extensions). Vérifier : `grep -o 'avx2' /proc/cpuinfo | head -1`, si rien ne s'affiche, relancer la connection mais forcer le noeud avec : `srun --constraint avx2 --pty bash`.
 
     > **Si le SLURM échoue** à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou via `pip install snakemake`.
 
-### Via le script SLURM (recommandé sur cluster)
+### Via le script SLURM (recommandé sur cluster GenOuest)
 
 Le script `run_pipeline.sh` est auto-suffisant : il vérifie si Snakemake est installé et le télécharge si besoin, puis **lance le pipeline**.
 
@@ -146,7 +127,7 @@ data/
 └── pdestructans_chrom2_run1.fasta
 
 all_results/
-├── result_pdestructans_chrom1_run1/    ← nom dérivé automatiquement du fichier FASTA
+├── result_pdestructans_chrom1_run1_<reference>/    ← nom dérivé du FASTA d'entrée + la reference du fichier de configuration 
 │   ├── per_sample/
 │   │   └── *.fa
 │   ├── Minigraph/                         (si tools.minigraph: true)
@@ -164,11 +145,13 @@ all_results/
 │   │   ├── seqfile.tsv
 │   │   ├── pangenome_MGC.gfa
 │   │   ├── minigraph_cactus.log
-│   │   └── bandage_MGC.png                 (si tools.visualisation: true)
-│   └── runs_summary_update.txt
-├── result_pdestructans_chrom2_run1/       ← second run traité en parallèle
+│   │   └── bandage_MGC.png                (si tools.visualisation: true)
+│   └── config_used.yaml                   (copie du fichier de configuration utilisé pour la run)
+│   └── runs_summary_update.txt            (statistiques de la run : nombre de node, path, extrait du log etc.)
+|
+├── result_pdestructans_chrom2_run1_<reference>/       ← second run (second fichier fasta) traité en parallèle
 │   └── ...
-└── pipeline_launches.log                  ← suivi de tous les lancements (date, durée, outils)
+└── pipeline_launches.log                  ← suivi de tous les lancements (date, durée, outils, reference choisie)
 ```
 
 Le fichier `pipeline_launches.log` contient l'historique des runs précédentes. Utile pour suivre ce qui à été apporté ou modifié dans le temps.
@@ -244,7 +227,7 @@ snakemake --use-singularity --cores 4 --snakefile workflow/Snakefile
 
 ```
 all_results/
-└── result_pdestructans_chrom1_test/
+└── result_pdestructans_chrom1_test_sampleA/
     ├── per_sample/
     │   ├── sampleA.fa
     │   ├── sampleB.fa
@@ -266,7 +249,7 @@ all_results/
 ```
 
 
-## Images Apptainer et règles du pipeline
+## Images Apptainer, arborescence et règles du pipeline
 
 #### Images utilisées (Apptainer)
 
@@ -279,6 +262,25 @@ all_results/
 | `prepare_seqfile` | *(règle Python pure, pas de conteneur)* |
 | `run_minigraph_cactus` | `quay.io/comparative-genomics-toolkit/cactus:v3.2.1` |
 > **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules ci-dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
+
+### Structure
+Arborescence générale du pipeline :
+```
+pipeline_pg_builder/
+├── config/config.yaml              ← fichier de config à éditer
+└── input_data/                     ← dossier où peuvent être copié les fichiers d'entrée
+└── workflow/
+    ├── Snakefile                   ← point d'entée (main) : config, variables globales, rule all, includes
+    ├── rules/
+    │   ├── minigraph.smk           ← rules pour minigraph
+    │   ├── pggb.smk                ← rules pour PGGB
+    │   ├── mini-cactus             ← rules pour minigraph-cactus
+    │   ├── report.smk              ← build_summary
+    │   ├── syri.smk                ← rules pour la detection de SV avec SyRI
+    │   ├── syri_to_GT.smk          ← rules pour passer des SV trouvés au GT séquences
+    │   └── visu.smk                ← génère des images Bandage et ODGI
+    └── scripts/**                  ← scripts python appelés par les rules 
+```
 
 
 ### Règles (rules) Snakemake
