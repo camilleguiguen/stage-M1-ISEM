@@ -92,10 +92,10 @@ fasta_files = sorted(f for ext in _valid_extensions for f in input_dir.glob(f"*{
 n = config.get("n_first")
 RUNS = {}
 for fasta_path in fasta_files:
-    run_name = fasta_to_run_name(fasta_path)
     all_names = read_record_names(str(fasta_path))
     samples   = all_names[:n] if n else all_names  # sous-ensemble si n_first défini
     reference = config.get("reference") or samples[0]
+    run_name  = fasta_to_run_name(fasta_path, reference)   # reference calculée AVANT, et passée ici
     RUNS[run_name] = {
         "fasta":     str(fasta_path),
         "samples":   samples,
