@@ -3,13 +3,12 @@
 # =============================================================================
 
 # Répertoire contenant les fichiers FASTA assemblés
-# Format des noms de fichiers : <espece>_<chrom>_<commentaire>.fasta
-# Ex : pdestructans_chrom1_run1.fasta → dossier de sortie result_pdestructans_chrom1_run1/            
+# Format des noms de fichiers (3 CHAMPS OBLIGATOIRES) : <espece>_<chrom>_<commentaire>.fasta
+# Ex : pdestructans_chrom1_run1.fasta → dossier de sortie result_pdestructans_chrom1_run1_<reference>/
 input_dir: "input_data/"
 
 # Répertoire de sortie racine
 # conseillé : "/scratch/<EspacePerso>/all_results"
-
 output_dir: "all_results"
 
 # --- Sélection des isolats --------------------------------------------------
