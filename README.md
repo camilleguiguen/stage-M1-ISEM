@@ -1,6 +1,6 @@
 # Pangenome builder pipeline - Projet ANR PanQueSt 
 
-Prend en entrée un ou plusieurs **multi-FASTA assemblés** et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus et/ou PGGB. Parallèlement, le pipeline pourra aussi construire un **Ground truth de SV** sur les séquences (binetôt disponnible, SyRI image to fix).
+Prend en entrée un ou plusieurs **multi-FASTA assemblés** et produit un ou plusieurs **graphes de pangénome** avec les constructeurs Minigraph, Minigraph-cactus et/ou PGGB. Parallèlement, le pipeline peut aussi construire une **vérité de terrain (ground truth) de SV** à partir des séquences, grâce à l'outil SyRI.
 
 ## Sommaire
 
@@ -30,6 +30,8 @@ tree # pour voir l'arborescence
     > **Attention** : si vous êtes sur le cluster Genouest, soyez sûr d'être sur un noeud avec AVX2 (Advanced Vector Extensions). Vérifier : `grep -o 'avx2' /proc/cpuinfo | head -1`, si rien ne s'affiche, relancer la connection mais forcer le noeud avec : `srun --constraint avx2 --pty bash`.
 
     > **Si le SLURM échoue** à cause de l'installation de Snakemake : intaller le à la mains. Voir https://snakemake.readthedocs.io/en/stable/getting_started/installation.html ou via `pip install snakemake`.
+
+    > **Si `tools.GTsequences: true`** : la règle `run_syri` s'appuie pour l'instant sur un environnement Conda `syri-env` installé localement sur le cluster Genouest (chemin en dur dans `workflow/rules/syri.smk`), en attendant une image Apptainer dédiée. Voir [Perspectives](#perspectives-damélioration-pour-ce-pipeline).
 
 ### Via le script SLURM (recommandé sur cluster GenOuest)
 
@@ -99,7 +101,7 @@ tools:
   pggb: false                # activer/désactiver PGGB
   minigraph_cactus: false    # activer/désactiver Minigraph-Cactus
   visualisation: false       # true = génère et gère les images Bandage
-  GTsequences: false         # lance syri.smk et syti_to_gtseq.smk 
+  GTsequences: false         # lance syri.smk et syri_to_gtseq.smk (détection SV + GT séquences)
 
 minigraph:
   min_sv_len: 50
@@ -114,6 +116,9 @@ pggb:
 minigraph_cactus:
   threads: 4
   gfa_mode : full # pour que la concat des walks reforme le fasta exact
+
+syri:
+  threads: 4
 
 GTsequences:
   keep_per_sample_outputs: false #permet de ne garder que les GT sequences finaux (false) ou tout garder (true)
@@ -146,6 +151,14 @@ all_results/
 │   │   ├── pangenome_MGC.gfa
 │   │   ├── minigraph_cactus.log
 │   │   └── bandage_MGC.png                (si tools.visualisation: true)
+│   ├── SyRI_and_GTsequences/               (si tools.GTsequences: true)
+│   │   ├── {sample}_syri/                  (si keep_per_sample_outputs: true)
+│   │   │   ├── {sample}_syri.out
+│   │   │   └── GT/BIG_GT.tsv (+ GT_<type>.tsv si présents)
+│   │   ├── {sample}.sorted.bam             (si keep_per_sample_outputs: true)
+│   │   ├── syri_done.txt                   (marqueur agrégé SyRI)
+│   │   ├── GTsequences/BIG_GT.tsv          (ground truth séquence fusionné du run)
+│   │   └── gtseq_done.txt                  (marqueur final, nettoie les sorties par isolat si keep_per_sample_outputs: false)
 │   └── config_used.yaml                   (copie du fichier de configuration utilisé pour la run)
 │   └── runs_summary_update.txt            (statistiques de la run : nombre de node, path, extrait du log etc.)
 |
@@ -164,11 +177,11 @@ Le but est de vérifier que le **dry-run** passe sans erreur pour tous les outil
 
 **1. Préparer le répertoire de données**
 
-Le fichier doit être nommé au format `<espece>_<chrom>_<commentaire>.fasta` et placé dans `data/` :
+Le fichier doit être nommé au format `<espece>_<chrom>_<commentaire>.fasta` et placé dans `input_data/` :
 
 ```bash
-cd pipeline_pg_builder/
-cp ../test_data/testfile_3simples_samples.fasta  input_data/
+cd pipeline_pg_builder/input_data/ 
+cp ../../test_data/testfile_3simples_samples.fasta  .
 ```
 
 **2. Configurer `config/config.yaml` — tout activer**
@@ -184,6 +197,7 @@ tools:
   pggb: true
   minigraph_cactus: true
   visualisation: true   # teste aussi la génération des images png Bandage et ODGI
+  GTsequences: true     # teste aussi SyRI + la construction du ground truth séquence
 ```
 
 **3. Dry-run — aucune exécution réelle, vérifie que toutes les règles se résolvent**
@@ -207,9 +221,15 @@ Job counts:
   1      prepare_seqfile
   1      run_minigraph_cactus
   1      build_summary
+  1      save_config
   1      bandage_minigraph
   1      bandage_mgc
   1      pggb_visu
+  2      run_syri                (1 par isolat non-référence)
+  1      syri_all
+  2      syri_to_gtseq           (1 par isolat non-référence)
+  1      merge_gtseq
+  1      gt_all
 ```
 
 Si une règle manque ou si Snakemake signale une erreur de résolution de wildcard ou de fichier manquant, c'est ici que ça se verra — sans avoir lancé de calcul coûteux.
@@ -245,6 +265,10 @@ all_results/
     │   ├── pangenome_MGC.gfa
     │   ├── minigraph_cactus.log
     │   └── bandage_MGC.png
+    ├── SyRI_and_GTsequences/
+    │   ├── syri_done.txt
+    │   ├── gtseq_done.txt
+    │   └── GTsequences/BIG_GT.tsv
     └── runs_summary_update.txt
 ```
 
@@ -261,6 +285,7 @@ all_results/
 | `run_pggb` | `quay.io/biocontainers/pggb:0.7.4--h9ee0642_0` |
 | `prepare_seqfile` | *(règle Python pure, pas de conteneur)* |
 | `run_minigraph_cactus` | `quay.io/comparative-genomics-toolkit/cactus:v3.2.1` |
+| `run_syri` | *(pas encore conteneurisé — solution temporaire : environnement Conda `syri-env` installé sur le cluster, chemin en dur dans `syri.smk`)* |
 > **Remarque** : Si un prochain développeur veut utiliser une autre version pour les outils des rules ci-dessus, il aura uniquement à changer le **tag** en fin d'image Biocontainer : `samtools:1.21--h50ea8bc_0` -> `samtools:<new_version>--<new_build_string>`. Tout les tags sont disponnible sur cet URL : https://biocontainers.pro/registry 
 
 ### Structure
@@ -274,10 +299,10 @@ pipeline_pg_builder/
     ├── rules/
     │   ├── minigraph.smk           ← rules pour minigraph
     │   ├── pggb.smk                ← rules pour PGGB
-    │   ├── mini-cactus             ← rules pour minigraph-cactus
-    │   ├── report.smk              ← build_summary
+    │   ├── mini-cactus.smk         ← rules pour minigraph-cactus
+    │   ├── report.smk              ← save_config, build_summary
     │   ├── syri.smk                ← rules pour la detection de SV avec SyRI
-    │   ├── syri_to_GT.smk          ← rules pour passer des SV trouvés au GT séquences
+    │   ├── syri_to_gtseq.smk       ← rules pour passer des SV trouvés au GT séquences
     │   └── visu.smk                ← génère des images Bandage et ODGI
     └── scripts/**                  ← scripts python appelés par les rules 
 ```
@@ -291,23 +316,36 @@ pipeline_pg_builder/
 - **`run_minigraph`** — construit le graphe de pangénome avec Minigraph
 - **`run_pggb`** — construit le graphe de pangénome avec PGGB
 - **`run_minigraph_cactus`** — construit le graphe de pangénome avec cactus-pangenome
+- **`save_config`** — copie le `config.yaml` utilisé dans le dossier de sortie du run (traçabilité)
 - **`build_summary`** — calcule des stats sur les GFAs produits et génère un résumé global du run
 - **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualisation: true)*
 - **`bandage_mgc`** — génère une image PNG du graphe Minigraph-Cactus via Bandage *(si visualisation: true)*
 - **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualisation: true)*
+- **`run_syri`** — compare chaque isolat non-référence à la référence avec SyRI, produit un fichier `{sample}_syri.out` *(si GTsequences: true)*
+- **`syri_all`** — point de synchro qui agrège tous les `.out` d'un run dans un marqueur `syri_done.txt` *(si GTsequences: true)*
+- **`syri_to_gtseq`** — convertit le `.out` de chaque isolat en tables GT par type de SV (`GT_<type>.tsv`, `BIG_GT.tsv`) *(si GTsequences: true)*
+- **`merge_gtseq`** — fusionne les tables GT de tous les isolats du run et réassigne les `id_event` à l'échelle du run entier *(si GTsequences: true)*
+- **`gt_all`** — point de synchro final : marqueur `gtseq_done.txt`, supprime les sorties par isolat si `GTsequences.keep_per_sample_outputs: false` *(si GTsequences: true)*
 
 
 **Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
 Seules les branches activées dans `tools:` sont exécutées.
 
 
-Flux pour syri et construction du GTsequence (si `tools.syri=true`)
+Flux pour la détection de SV et la construction du ground truth séquence (si `tools.GTsequences: true`)
 ```
-run_syri (syri.smk)          →  {sample}_syri.out
+run_syri (syri.smk)            →  {sample}_syri.out          (1 par isolat non-référence)
         ↓
-syri_to_gt (syri_to_gt.smk)  →  GT/BIG_GT.tsv (+ GT_<type>.tsv si présents)
+syri_all (syri.smk)            →  SyRI_and_GTsequences/syri_done.txt      (marqueur agrégé)
+
+run_syri (syri.smk)            →  {sample}_syri.out
         ↓
-gt_all (syri_to_gt.smk)      →  SyRI/gtseq_done.txt   (marqueur agrégé, comme syri_done.txt)
+syri_to_gtseq (syri_to_gtseq.smk)  →  {sample}_syri/GT/BIG_GT.tsv (+ GT_<type>.tsv si présents)
+        ↓
+merge_gtseq (syri_to_gtseq.smk)    →  GTsequences/BIG_GT.tsv   (fusion de tous les isolats du run)
+        ↓
+gt_all (syri_to_gtseq.smk)         →  SyRI_and_GTsequences/gtseq_done.txt  (marqueur final, nettoie les
+                                       sorties par isolat si keep_per_sample_outputs: false)
 ```
 
 ## Option de visualisation d'images png du pangénome
@@ -316,7 +354,7 @@ Activée avec `tools.visualisation: true` dans `config.yaml`.
 
 | Cas | Ce qui est généré |
 |-----|-------------------|
-| Minigraph seul | `MinUne fois que ça marche…igraph/bandage_MG.png` |
+| Minigraph seul | `Minigraph/bandage_MG.png` |
 | PGGB seul | `PGGB/visu_images/bandage.png` + PNGs générés par PGGB déplacés dans `visu_images/` |
 | Minigraph-Cactus seul | `MinigraphCactus/bandage_MGC.png` |
 | Plusieurs outils | Combinaison des cas ci-dessus |
@@ -331,4 +369,5 @@ Les PNGs générés automatiquement par PGGB (visualisations `odgi` : depth, inv
 Étapes suivantes possibles :
 1. Voir s'il y a d'autres params intéréssants / outils
 2. Ajout d'un formulaire pour remplir le fichier de config
-3. Implémentation d'une commande de mise à jour des versions des outils. 
+3. Implémentation d'une commande de mise à jour des versions des outils
+4. Conteneuriser `run_syri` (actuellement dépendant d'un environnement Conda installé en dur sur le cluster) pour rendre cette étape aussi portable que les autres règles
