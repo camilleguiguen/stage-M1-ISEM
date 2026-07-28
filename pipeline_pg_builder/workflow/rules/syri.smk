@@ -27,33 +27,37 @@ rule run_syri:
         ref = lambda wc: OUTPUT_DIR + f"/{wc.run}/per_sample/{RUNS[wc.run]['reference']}.fa",
         qry = OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
     output:
-        syri_out = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/{sample}_syri/{sample}_syri.out",
+        # Seul fichier conservé au final : le .out, directement dans SyRI/
+        syri_out = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/SyRI/{sample}_syri.out",
     params:
-        prefix = lambda wc: wc.sample,
-        outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences",
-        # Chemin vers le script d'init conda (nécessaire pour que `conda activate`
-        # fonctionne dans un shell non-interactif comme celui lancé par Snakemake)
+        prefix     = lambda wc: wc.sample,
+        # dossier temporaire dédié à CET isolat -> évite les collisions entre jobs parallèles
+        tmp_outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences/.tmp_{wc.sample}",
+        final_dir  = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences/SyRI",
         conda_sh  = "/home/genouest/cnrs_umr5554/cguiguen/miniconda3/etc/profile.d/conda.sh",
         conda_env = "syri-env",
     threads:
         config.get("syri", {}).get("threads", 4)
     shell:
         """
-        # Solution temporaire : un simple export PATH ne suffit pas car syri
-        # charge des bibliothèques partagées (ex: libgomp.so.1 pour igraph)
-        # qui vivent dans envs/syri-env/lib/ — seul un vrai `conda activate`
-        # configure correctement LD_LIBRARY_PATH (et le reste) pour ça.
         source {params.conda_sh}
         conda activate {params.conda_env}
 
-        bash workflow/scripts/syri_launch.sh {input.ref} {input.qry} {params.prefix} {params.outdir} {threads}
+        mkdir -p {params.final_dir}
+
+        bash workflow/scripts/syri_launch.sh {input.ref} {input.qry} {params.prefix} {params.tmp_outdir} {threads}
+
+        # On ne garde QUE le .out -> copié dans SyRI/, tout le reste (bam trié,
+        # vcf, summary, logs syri) part avec la suppression du dossier temporaire.
+        cp {params.tmp_outdir}/{params.prefix}_syri/{params.prefix}_syri.out {output.syri_out}
+        rm -rf {params.tmp_outdir}
         """
 
-# --- point de synchro (inchangé) --------------------------------------------
+
 rule syri_all:
     input:
         lambda wc: expand(
-            OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/{sample}_syri/{sample}_syri.out",
+            OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/SyRI/{sample}_syri.out",
             run=wc.run,
             sample=[s for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]],
         ),
