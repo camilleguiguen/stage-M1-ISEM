@@ -119,10 +119,9 @@ minigraph_cactus:
 
 syri:
   threads: 4
-
-GTsequences:
-  keep_per_sample_outputs: false #permet de ne garder que les GT sequences finaux (false) ou tout garder (true)
 ```
+
+> **Remarque** : la fusion des GT se fait désormais directement à partir des `.out` SyRI de tous les isolats d'un run — il n'y a plus de sortie intermédiaire par isolat à conserver ou nettoyer, donc l'ancienne option `GTsequences.keep_per_sample_outputs` n'existe plus.
 
 ## Sortie
 
@@ -151,14 +150,19 @@ all_results/
 │   │   ├── pangenome_MGC.gfa
 │   │   ├── minigraph_cactus.log
 │   │   └── bandage_MGC.png                (si tools.visualisation: true)
-│   ├── SyRI_and_GTsequences/               (si tools.GTsequences: true)
-│   │   ├── {sample}_syri/                  (si keep_per_sample_outputs: true)
-│   │   │   ├── {sample}_syri.out
-│   │   │   └── GT/BIG_GT.tsv (+ GT_<type>.tsv si présents)
-│   │   ├── {sample}.sorted.bam             (si keep_per_sample_outputs: true)
-│   │   ├── syri_done.txt                   (marqueur agrégé SyRI)
-│   │   ├── GTsequences/BIG_GT.tsv          (ground truth séquence fusionné du run)
-│   │   └── gtseq_done.txt                  (marqueur final, nettoie les sorties par isolat si keep_per_sample_outputs: false)
+│   ├── SyRI/                               (si tools.GTsequences: true)
+│   │   ├── {sample}_syri.out               (1 par isolat non-référence — seul fichier SyRI conservé)
+│   │   └── ...
+│   ├── GTsequences/                        (si tools.GTsequences: true)
+│   │   ├── BIG_GT_DEL.tsv                  (par type de SV présent dans le run)
+│   │   ├── BIG_GT_DUP.tsv
+│   │   ├── BIG_GT_INS.tsv
+│   │   ├── BIG_GT_INV.tsv
+│   │   ├── BIG_GT_TRA.tsv
+│   │   ├── BIG_GT_TDM.tsv
+│   │   └── BIG_GT.tsv                      (fusion de tous les types, tous isolats du run)
+│   ├── syri_done.txt                       (marqueur agrégé SyRI, si tools.GTsequences: true)
+│   ├── gtseq_done.txt                      (marqueur final GTsequences, si tools.GTsequences: true)
 │   └── config_used.yaml                   (copie du fichier de configuration utilisé pour la run)
 │   └── runs_summary_update.txt            (statistiques de la run : nombre de node, path, extrait du log etc.)
 |
@@ -227,8 +231,7 @@ Job counts:
   1      pggb_visu
   2      run_syri                (1 par isolat non-référence)
   1      syri_all
-  2      syri_to_gtseq           (1 par isolat non-référence)
-  1      merge_gtseq
+  1      merge_gtseq             (fusion directe des .out en BIG_GT_<type>.tsv + BIG_GT.tsv)
   1      gt_all
 ```
 
@@ -265,10 +268,13 @@ all_results/
     │   ├── pangenome_MGC.gfa
     │   ├── minigraph_cactus.log
     │   └── bandage_MGC.png
-    ├── SyRI_and_GTsequences/
-    │   ├── syri_done.txt
-    │   ├── gtseq_done.txt
-    │   └── GTsequences/BIG_GT.tsv
+    ├── SyRI/
+    │   ├── sampleB_syri.out
+    │   └── sampleC_syri.out
+    ├── GTsequences/
+    │   └── BIG_GT.tsv
+    ├── syri_done.txt
+    ├── gtseq_done.txt
     └── runs_summary_update.txt
 ```
 
@@ -302,7 +308,7 @@ pipeline_pg_builder/
     │   ├── mini-cactus.smk         ← rules pour minigraph-cactus
     │   ├── report.smk              ← save_config, build_summary
     │   ├── syri.smk                ← rules pour la detection de SV avec SyRI
-    │   ├── syri_to_gtseq.smk       ← rules pour passer des SV trouvés au GT séquences
+    │   ├── syri_to_gtseq.smk       ← fusion directe des .out SyRI en tables GT du run
     │   └── visu.smk                ← génère des images Bandage et ODGI
     └── scripts/**                  ← scripts python appelés par les rules 
 ```
@@ -321,11 +327,10 @@ pipeline_pg_builder/
 - **`bandage_minigraph`** — génère une image PNG du graphe Minigraph via Bandage *(si visualisation: true)*
 - **`bandage_mgc`** — génère une image PNG du graphe Minigraph-Cactus via Bandage *(si visualisation: true)*
 - **`pggb_visu`** — génère une image Bandage du graphe PGGB et regroupe tous les visuels dans `visu_images/` *(si visualisation: true)*
-- **`run_syri`** — compare chaque isolat non-référence à la référence avec SyRI, produit un fichier `{sample}_syri.out` *(si GTsequences: true)*
+- **`run_syri`** — compare chaque isolat non-référence à la référence avec SyRI, produit un fichier `{sample}_syri.out` directement dans `SyRI/` (seul fichier SyRI conservé, le reste — bam, vcf, logs — est jeté) *(si GTsequences: true)*
 - **`syri_all`** — point de synchro qui agrège tous les `.out` d'un run dans un marqueur `syri_done.txt` *(si GTsequences: true)*
-- **`syri_to_gtseq`** — convertit le `.out` de chaque isolat en tables GT par type de SV (`GT_<type>.tsv`, `BIG_GT.tsv`) *(si GTsequences: true)*
-- **`merge_gtseq`** — fusionne les tables GT de tous les isolats du run et réassigne les `id_event` à l'échelle du run entier *(si GTsequences: true)*
-- **`gt_all`** — point de synchro final : marqueur `gtseq_done.txt`, supprime les sorties par isolat si `GTsequences.keep_per_sample_outputs: false` *(si GTsequences: true)*
+- **`merge_gtseq`** — lit directement tous les `.out` SyRI du run, fusionne les SV par type et produit les tables `GTsequences/BIG_GT_<type>.tsv` (un fichier par type de SV présent dans le run) ainsi que `GTsequences/BIG_GT.tsv` (fusion de tous les types), avec réassignation des `id_event` à l'échelle du run entier *(si GTsequences: true)*
+- **`gt_all`** — point de synchro final : marqueur `gtseq_done.txt` *(si GTsequences: true)*
 
 
 **Remarque** : Snakemake déduit l'ordre d'exécution seul à partir des input/output des règles.
@@ -334,18 +339,16 @@ Seules les branches activées dans `tools:` sont exécutées.
 
 Flux pour la détection de SV et la construction du ground truth séquence (si `tools.GTsequences: true`)
 ```
-run_syri (syri.smk)            →  {sample}_syri.out          (1 par isolat non-référence)
+run_syri (syri.smk)            →  SyRI/{sample}_syri.out          (1 par isolat non-référence)
         ↓
-syri_all (syri.smk)            →  SyRI_and_GTsequences/syri_done.txt      (marqueur agrégé)
+syri_all (syri.smk)            →  syri_done.txt                   (marqueur agrégé)
 
-run_syri (syri.smk)            →  {sample}_syri.out
+run_syri (syri.smk)            →  SyRI/{sample}_syri.out
         ↓
-syri_to_gtseq (syri_to_gtseq.smk)  →  {sample}_syri/GT/BIG_GT.tsv (+ GT_<type>.tsv si présents)
+merge_gtseq (syri_to_gtseq.smk)    →  GTsequences/BIG_GT_<type>.tsv (un par type de SV présent)
+                                       + GTsequences/BIG_GT.tsv     (fusion de tous les isolats et types du run)
         ↓
-merge_gtseq (syri_to_gtseq.smk)    →  GTsequences/BIG_GT.tsv   (fusion de tous les isolats du run)
-        ↓
-gt_all (syri_to_gtseq.smk)         →  SyRI_and_GTsequences/gtseq_done.txt  (marqueur final, nettoie les
-                                       sorties par isolat si keep_per_sample_outputs: false)
+gt_all (syri_to_gtseq.smk)         →  gtseq_done.txt                (marqueur final)
 ```
 
 ## Option de visualisation d'images png du pangénome

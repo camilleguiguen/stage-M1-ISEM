@@ -17,9 +17,6 @@
 
 OUTPUT_DIR = config["output_dir"]
 
-# Chemin vers le bin/ de l'environnement conda contenant syri+samtools+minimap2
-# TODO (à corriger si besoin) : chemin absolu propre à l'utilisateur/cluster.
-# A terme, remplacer par une vraie solution portable (container ou --use-conda).
 SYRI_ENV_BIN = "/home/genouest/cnrs_umr5554/cguiguen/miniconda3/envs/syri-env/bin"
 
 rule run_syri:
@@ -27,13 +24,13 @@ rule run_syri:
         ref = lambda wc: OUTPUT_DIR + f"/{wc.run}/per_sample/{RUNS[wc.run]['reference']}.fa",
         qry = OUTPUT_DIR + "/{run}/per_sample/{sample}.fa",
     output:
-        # Seul fichier conservé au final : le .out, directement dans SyRI/
-        syri_out = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/SyRI/{sample}_syri.out",
+        # Seul fichier conservé au final : le .out, directement dans {run}/SyRI/
+        syri_out = OUTPUT_DIR + "/{run}/SyRI/{sample}_syri.out",
     params:
         prefix     = lambda wc: wc.sample,
         # dossier temporaire dédié à CET isolat -> évite les collisions entre jobs parallèles
-        tmp_outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences/.tmp_{wc.sample}",
-        final_dir  = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI_and_GTsequences/SyRI",
+        tmp_outdir = lambda wc: OUTPUT_DIR + f"/{wc.run}/.tmp_{wc.sample}",
+        final_dir  = lambda wc: OUTPUT_DIR + f"/{wc.run}/SyRI",
         conda_sh  = "/home/genouest/cnrs_umr5554/cguiguen/miniconda3/etc/profile.d/conda.sh",
         conda_env = "syri-env",
     threads:
@@ -47,8 +44,6 @@ rule run_syri:
 
         bash workflow/scripts/syri_launch.sh {input.ref} {input.qry} {params.prefix} {params.tmp_outdir} {threads}
 
-        # On ne garde QUE le .out -> copié dans SyRI/, tout le reste (bam trié,
-        # vcf, summary, logs syri) part avec la suppression du dossier temporaire.
         cp {params.tmp_outdir}/{params.prefix}_syri/{params.prefix}_syri.out {output.syri_out}
         rm -rf {params.tmp_outdir}
         """
@@ -57,12 +52,12 @@ rule run_syri:
 rule syri_all:
     input:
         lambda wc: expand(
-            OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/SyRI/{sample}_syri.out",
+            OUTPUT_DIR + "/{run}/SyRI/{sample}_syri.out",
             run=wc.run,
             sample=[s for s in RUNS[wc.run]["samples"] if s != RUNS[wc.run]["reference"]],
         ),
     output:
-        done = OUTPUT_DIR + "/{run}/SyRI_and_GTsequences/syri_done.txt",
+        done = OUTPUT_DIR + "/{run}/syri_done.txt",
     params:
         ref = lambda wc: RUNS[wc.run]["reference"],
     shell:
