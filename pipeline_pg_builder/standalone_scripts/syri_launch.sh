@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=syri
-#SBATCH --time=06:00:00
+#SBATCH --time=26:00:00
 #SBATCH --mem=8G
 #SBATCH --cpus-per-task=4
 #SBATCH --output=slurm-%j.out
